@@ -1,0 +1,122 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+// ============================================
+// Model: User
+// Mengelola data pengguna dan perannya
+// ============================================
+model User {
+  id        String   @id @default(uuid())
+  name      String
+  email     String   @unique
+  password  String   // Hashed with bcrypt
+  role      String   @default("STAFF") // ADMIN, STAFF, VIEWER
+  isActive  Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  letters   Letter[]
+  auditLogs AuditLog[]
+}
+
+// ============================================
+// Model: Letter (Surat)
+// Data utama surat masuk & keluar
+// ============================================
+model Letter {
+  id              String   @id @default(uuid())
+  letterNumber    String   @unique // Nomor surat otomatis
+  category        String   @default("KELUAR_MASUK") // AGENDA, KELUAR_MASUK, NOTA_VERIFIKASI
+  type            String?  // MASUK atau KELUAR (untuk KELUAR_MASUK)
+  subject         String   // Perihal surat / dokumen
+  sender          String?  // Pengirim (untuk surat masuk)
+  recipient       String?  // Penerima / Alamat Penerima / Tujuan
+  letterDate      DateTime // Tanggal surat / dokumen
+  receivedDate    DateTime? // Tanggal diterima (surat masuk)
+  description     String?  // Keterangan tambahan
+  classification  String   @default("BIASA") // BIASA, RAHASIA, PENTING
+  status          String   @default("ACTIVE") // ACTIVE, ARCHIVED
+  archiveReason   String?  // Alasan pengarsipan (wajib saat soft delete)
+
+  // Field Spesifik Kategori
+  agendaType      String?  // Jenis Surat Agenda (1-14)
+  code            String?  // Kode Surat / Nomor Petunjuk
+  nomorBerkas     String?  // Nomor Berkas
+  nomorPetunjuk   String?  // Nomor Petunjuk
+  nominal         Float?   // Nominal (untuk Nota Verifikasi)
+  paraf           String?  // Paraf / Tanda tangan persetujuan
+
+  // Relasi
+  createdById     String
+  createdBy       User     @relation(fields: [createdById], references: [id])
+
+  // Timestamps
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  // Relasi ke versi dan log
+  versions        LetterVersion[]
+  auditLogs       AuditLog[]
+}
+
+// ============================================
+// Model: LetterVersion (Riwayat Versi Surat)
+// Menyimpan snapshot data surat sebelum diedit
+// ============================================
+model LetterVersion {
+  id            String   @id @default(uuid())
+  version       Int      // Nomor versi (1, 2, 3, ...)
+  letterId      String
+  letter        Letter   @relation(fields: [letterId], references: [id])
+
+  // Snapshot data surat saat itu
+  category        String   @default("KELUAR_MASUK")
+  type            String?
+  subject         String
+  sender          String?
+  recipient       String?
+  letterDate      DateTime
+  description     String?
+  classification  String
+  changeNote      String?  // Catatan perubahan
+
+  // Snapshot Field Spesifik Kategori
+  agendaType      String?
+  code            String?
+  nomorBerkas     String?
+  nomorPetunjuk   String?
+  nominal         Float?
+  paraf           String?
+
+  createdAt     DateTime @default(now())
+}
+
+// ============================================
+// Model: AuditLog (Log Aktivitas Imutabel)
+// Mencatat setiap aktivitas di sistem secara otomatis
+// ============================================
+model AuditLog {
+  id          String   @id @default(uuid())
+  action      String   // CREATE, UPDATE, ARCHIVE, LOGIN, LOGOUT
+  entityType  String   // LETTER, USER, SESSION
+  entityId    String?  // ID entitas yang terkait
+  details     String?  // Detail perubahan dalam format JSON
+  ipAddress   String?  // Alamat IP pengguna
+
+  // Relasi
+  userId      String
+  user        User     @relation(fields: [userId], references: [id])
+  letterId    String?
+  letter      Letter?  @relation(fields: [letterId], references: [id])
+
+  createdAt   DateTime @default(now())
+}
