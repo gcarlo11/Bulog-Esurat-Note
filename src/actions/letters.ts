@@ -9,14 +9,47 @@ import { revalidatePath } from "next/cache";
 // Format: [TIPE]-[TAHUN][BULAN]-[NOMOR_URUT]
 // Contoh: SM-202607-0001 (Surat Masuk ke-1 bulan Juli 2026)
 // ============================================
+// ============================================
+// Helper: Penomoran Suffix Backdate & Klasifikasi
+// ============================================
+function getSuffix(index: number): string {
+  let suffix = "";
+  let temp = index;
+  while (temp >= 0) {
+    suffix = String.fromCharCode((temp % 26) + 65) + suffix;
+    temp = Math.floor(temp / 26) - 1;
+  }
+  return suffix;
+}
+
+function suffixToIndex(suffix: string): number {
+  if (!suffix) return -1;
+  let index = 0;
+  for (let i = 0; i < suffix.length; i++) {
+    index = index * 26 + (suffix.charCodeAt(i) - 64);
+  }
+  return index - 1;
+}
+
+function parseLetterNumber(letterNumber: string, kode: string) {
+  const prefix = `${kode}-`;
+  if (!letterNumber.startsWith(prefix)) return null;
+  const rest = letterNumber.slice(prefix.length);
+  const match = rest.match(/^(\d+)([A-Z]*)$/);
+  if (!match) return null;
+  return {
+    baseNumber: parseInt(match[1], 10),
+    suffix: match[2]
+  };
+}
+
 async function generateLetterNumber(
   category: string,
+  letterDate: Date,
   agendaType?: string,
   type?: string
 ): Promise<string> {
   const now = new Date();
-  const year = now.getFullYear();
-  const month = String(now.getMonth() + 1).padStart(2, "0");
   let prefix = "DOC";
 
   if (category === "KELUAR_MASUK") {
@@ -24,52 +57,107 @@ async function generateLetterNumber(
   } else if (category === "AGENDA") {
     const agendaPrefixes: Record<string, string> = {
       "Surat Perintah": "SP",
-      "Surat Keputusan": "SKEP",
-      "Surat Perjanjian Kerjasama": "SPK",
+      "Surat Keputusan": "K",
+      "Surat Perjanjian Kerjasama": "KK",
       "Berita Acara Serah Terima": "BAST",
       "Berita Acara": "BA",
-      "Surat Pengantar": "SPG",
-      "Edaran": "EDR",
+      "Surat Pengantar": "PT",
+      "Edaran": "SE",
       "Pengumuman": "PENG",
-      "Surat Keterangan/Pernyataan": "SKET",
-      "Memo/Nota Intern": "MEMO",
-      "Surat Kuasa": "SKU",
-      "Undangan": "UND",
-      "Claim": "CLM",
-      "Surat Izin (Cuti)": "CUTI",
+      "Surat Keterangan/Pernyataan": "T",
+      "Memo/Nota Intern": "M/NI",
+      "Surat Kuasa": "S",
+      "Undangan": "U",
+      "Claim": "C",
+      "Surat Izin (Cuti)": "I",
     };
     prefix = agendaPrefixes[agendaType || ""] || "AGD";
   } else if (category === "NOTA_VERIFIKASI") {
     prefix = "NV";
   }
 
-  // Cari nomor urut terakhir bulan ini untuk kategori/tipe ini
-  const startOfMonth = new Date(year, now.getMonth(), 1);
-  const endOfMonth = new Date(year, now.getMonth() + 1, 0, 23, 59, 59);
-
-  const lastLetter = await prisma.letter.findFirst({
+  // Ambil seluruh dokumen dengan prefix yang sama yang aktif
+  const samePrefixLetters = await prisma.letter.findMany({
     where: {
       category,
       agendaType: category === "AGENDA" ? agendaType : undefined,
       type: category === "KELUAR_MASUK" ? type : undefined,
-      createdAt: {
-        gte: startOfMonth,
-        lte: endOfMonth,
-      },
+      status: "ACTIVE",
     },
-    orderBy: { createdAt: "desc" },
+    orderBy: [
+      { letterDate: "asc" },
+      { createdAt: "asc" },
+    ],
   });
 
-  let sequence = 1;
-  if (lastLetter) {
-    const parts = lastLetter.letterNumber.split("-");
-    const lastSeq = parseInt(parts[parts.length - 1], 10);
-    if (!isNaN(lastSeq)) {
-      sequence = lastSeq + 1;
-    }
+  if (samePrefixLetters.length === 0) {
+    return `${prefix}-1`;
   }
 
-  return `${prefix}-${year}${month}-${String(sequence).padStart(4, "0")}`;
+  // Parse nomor surat
+  const parsedLetters = samePrefixLetters
+    .map((l) => {
+      const parsed = parseLetterNumber(l.letterNumber, prefix);
+      if (!parsed) return null;
+      return {
+        id: l.id,
+        letterDate: new Date(l.letterDate),
+        baseNumber: parsed.baseNumber,
+        suffix: parsed.suffix,
+        createdAt: new Date(l.createdAt),
+      };
+    })
+    .filter((l) => l !== null) as {
+      id: string;
+      letterDate: Date;
+      baseNumber: number;
+      suffix: string;
+      createdAt: Date;
+    }[];
+
+  if (parsedLetters.length === 0) {
+    return `${prefix}-1`;
+  }
+
+  // Cek backdate
+  const targetTime = letterDate.getTime();
+  const afterLetters = parsedLetters.filter((l) => l.letterDate.getTime() > targetTime);
+  const isBackdated = afterLetters.length > 0;
+
+  if (!isBackdated) {
+    const maxBase = Math.max(...parsedLetters.map((l) => l.baseNumber));
+    const nextBase = maxBase > 0 ? maxBase + 1 : 1;
+    return `${prefix}-${nextBase}`;
+  } else {
+    const beforeOrEqualLetters = parsedLetters
+      .filter((l) => l.letterDate.getTime() <= targetTime)
+      .sort((a, b) => {
+        const dateDiff = b.letterDate.getTime() - a.letterDate.getTime();
+        if (dateDiff !== 0) return dateDiff;
+        return b.createdAt.getTime() - a.createdAt.getTime();
+      });
+
+    let baseNumberToUse: number;
+
+    if (beforeOrEqualLetters.length > 0) {
+      baseNumberToUse = beforeOrEqualLetters[0].baseNumber;
+    } else {
+      const earliestLetter = parsedLetters.sort((a, b) => {
+        const dateDiff = a.letterDate.getTime() - b.letterDate.getTime();
+        if (dateDiff !== 0) return dateDiff;
+        return a.createdAt.getTime() - b.createdAt.getTime();
+      })[0];
+      baseNumberToUse = earliestLetter.baseNumber;
+    }
+
+    const siblings = parsedLetters.filter((l) => l.baseNumber === baseNumberToUse);
+    const suffixIndexes = siblings.map((l) => suffixToIndex(l.suffix));
+    const maxSuffixIndex = Math.max(...suffixIndexes);
+    const nextSuffixIndex = maxSuffixIndex + 1;
+    const nextSuffix = getSuffix(nextSuffixIndex);
+
+    return `${prefix}-${baseNumberToUse}${nextSuffix}`;
+  }
 }
 
 // ============================================
@@ -138,7 +226,7 @@ export async function createLetterAction(formData: FormData) {
   }
 
   const nominal = nominalStr ? parseFloat(nominalStr.replace(/[^0-9.-]+/g, "")) : null;
-  const letterNumber = await generateLetterNumber(category, agendaType, type);
+  const letterNumber = await generateLetterNumber(category, new Date(letterDate), agendaType, type);
 
   const letter = await prisma.letter.create({
     data: {

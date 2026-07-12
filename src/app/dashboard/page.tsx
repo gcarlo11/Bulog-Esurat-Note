@@ -112,8 +112,8 @@ export default async function DashboardPage() {
                       id: letter.id,
                       letterNumber: letter.letterNumber,
                       subject: letter.subject,
-                      sender: letter.sender,
-                      recipient: letter.recipient,
+                      sender: letter.sender ?? "",
+                      recipient: letter.recipient ?? "",
                       letterDate: letter.letterDate,
                     });
                     const shortHash = hash.substring(0, 12) + "...";
@@ -134,8 +134,8 @@ export default async function DashboardPage() {
                           <span style={{ fontWeight: 500, color: "var(--text-primary)" }}>{letter.subject}</span>
                         </td>
                         <td>
-                          <span className={`type-badge type-${letter.type.toLowerCase()}`}>
-                            {letter.type === "MASUK" ? "Masuk" : "Keluar"}
+                          <span className={`type-badge type-${(letter.type ?? "").toLowerCase()}`}>
+                            {letter.type === "MASUK" ? "Masuk" : letter.type === "KELUAR" ? "Keluar" : letter.category}
                           </span>
                         </td>
                         <td>

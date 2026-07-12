@@ -26,14 +26,22 @@ import {
 interface LetterVersion {
   id: string;
   version: number;
+  category: string;
+  type: string | null;
   subject: string;
-  sender: string;
-  recipient: string;
+  sender: string | null;
+  recipient: string | null;
   letterDate: Date;
   description: string | null;
   classification: string;
   changeNote: string | null;
   createdAt: Date;
+  agendaType: string | null;
+  code: string | null;
+  nomorBerkas: string | null;
+  nomorPetunjuk: string | null;
+  nominal: number | null;
+  paraf: string | null;
 }
 
 interface AuditLogEntry {
@@ -48,10 +56,11 @@ interface AuditLogEntry {
 interface LetterDetail {
   id: string;
   letterNumber: string;
-  type: string;
+  category: string;
+  type: string | null;
   subject: string;
-  sender: string;
-  recipient: string;
+  sender: string | null;
+  recipient: string | null;
   letterDate: Date;
   receivedDate: Date | null;
   description: string | null;
@@ -60,10 +69,33 @@ interface LetterDetail {
   archiveReason: string | null;
   createdAt: Date;
   updatedAt: Date;
+  agendaType: string | null;
+  code: string | null;
+  nomorBerkas: string | null;
+  nomorPetunjuk: string | null;
+  nominal: number | null;
+  paraf: string | null;
   createdBy: { name: string; email: string };
   versions: LetterVersion[];
   auditLogs: AuditLogEntry[];
 }
+
+const agendaTypes = [
+  "Surat Perintah",
+  "Surat Keputusan",
+  "Surat Perjanjian Kerjasama",
+  "Berita Acara Serah Terima",
+  "Berita Acara",
+  "Surat Pengantar",
+  "Edaran",
+  "Pengumuman",
+  "Surat Keterangan/Pernyataan",
+  "Memo/Nota Intern",
+  "Surat Kuasa",
+  "Undangan",
+  "Claim",
+  "Surat Izin (Cuti)",
+];
 
 function formatDate(date: Date) {
   return new Date(date).toLocaleDateString("id-ID", {
@@ -83,11 +115,19 @@ function formatDateTime(date: Date) {
   });
 }
 
+function formatRupiah(value: number) {
+  return new Intl.NumberFormat("id-ID", {
+    style: "currency",
+    currency: "IDR",
+    minimumFractionDigits: 0,
+  }).format(value);
+}
+
 function getActionLabel(action: string) {
   const map: Record<string, string> = {
-    CREATE: "Surat didaftarkan",
-    UPDATE: "Surat diperbarui",
-    ARCHIVE: "Surat diarsipkan",
+    CREATE: "Dokumen didaftarkan",
+    UPDATE: "Dokumen diperbarui",
+    ARCHIVE: "Dokumen diarsipkan",
   };
   return map[action] || action;
 }
@@ -107,12 +147,18 @@ export default function LetterDetailPage() {
   const [archiveReason, setArchiveReason] = useState("");
   const [message, setMessage] = useState({ type: "", text: "" });
   const [activeTab, setActiveTab] = useState<"detail" | "versions" | "logs">("detail");
+  
+  // Controlled fields for edit modal
+  const [nominalRaw, setNominalRaw] = useState("");
 
   const fetchDetail = useCallback(async () => {
     setLoading(true);
     try {
       const data = await getLetterDetail(letterId);
       setLetter(data as LetterDetail | null);
+      if (data && data.nominal) {
+        setNominalRaw(new Intl.NumberFormat("id-ID").format(data.nominal));
+      }
     } catch (e) {
       console.error("Failed to fetch letter detail:", e);
     } finally {
@@ -124,9 +170,21 @@ export default function LetterDetailPage() {
     fetchDetail();
   }, [fetchDetail]);
 
+  function handleNominalChange(value: string) {
+    const clean = value.replace(/[^\d]/g, "");
+    if (!clean) {
+      setNominalRaw("");
+      return;
+    }
+    setNominalRaw(new Intl.NumberFormat("id-ID").format(parseInt(clean, 10)));
+  }
+
   async function handleEdit(formData: FormData) {
     setEditLoading(true);
     try {
+      if (letter?.category === "NOTA_VERIFIKASI") {
+        formData.set("nominal", nominalRaw.replace(/\./g, ""));
+      }
       const result = await updateLetterAction(letterId, formData);
       if (result?.error) {
         setMessage({ type: "error", text: result.error });
@@ -136,7 +194,7 @@ export default function LetterDetailPage() {
         fetchDetail();
       }
     } catch {
-      setMessage({ type: "error", text: "Gagal memperbarui surat." });
+      setMessage({ type: "error", text: "Gagal memperbarui dokumen." });
     } finally {
       setEditLoading(false);
     }
@@ -154,7 +212,7 @@ export default function LetterDetailPage() {
         fetchDetail();
       }
     } catch {
-      setMessage({ type: "error", text: "Gagal mengarsipkan surat." });
+      setMessage({ type: "error", text: "Gagal mengarsipkan dokumen." });
     } finally {
       setArchiveLoading(false);
     }
@@ -166,7 +224,7 @@ export default function LetterDetailPage() {
         <div className="empty-state-icon">
           <FileText style={{ animation: "pulse 2s infinite" }} />
         </div>
-        <h3>Memuat detail surat...</h3>
+        <h3>Memuat detail dokumen...</h3>
       </div>
     );
   }
@@ -175,8 +233,8 @@ export default function LetterDetailPage() {
     return (
       <div className="empty-state">
         <XCircle />
-        <h3>Surat Tidak Ditemukan</h3>
-        <p>Surat dengan ID ini tidak ada dalam sistem.</p>
+        <h3>Dokumen Tidak Ditemukan</h3>
+        <p>Dokumen dengan ID ini tidak ada dalam sistem.</p>
         <Link href="/dashboard/letters" className="btn btn-secondary" style={{ marginTop: "1rem" }}>
           <ArrowLeft size={14} />
           Kembali
@@ -189,8 +247,8 @@ export default function LetterDetailPage() {
     id: letter.id,
     letterNumber: letter.letterNumber,
     subject: letter.subject,
-    sender: letter.sender,
-    recipient: letter.recipient,
+    sender: letter.sender || "",
+    recipient: letter.recipient || "",
     letterDate: letter.letterDate,
   });
 
@@ -207,15 +265,17 @@ export default function LetterDetailPage() {
           </div>
           <h2>{letter.letterNumber}</h2>
           <div style={{ display: "flex", gap: "6px", marginTop: "8px" }}>
-            <span className={`type-badge type-${letter.type.toLowerCase()}`}>
-              {letter.type === "MASUK" ? "Masuk" : "Keluar"}
+            <span style={{ fontSize: "11px", fontWeight: 600, textTransform: "uppercase", color: "var(--text-secondary)", background: "var(--bg-muted)", padding: "2px 8px", borderRadius: "4px" }}>
+              {letter.category.replace("_", " ")}
             </span>
+            {letter.category === "KELUAR_MASUK" && (
+              <span className={`type-badge type-${(letter.type || "").toLowerCase()}`}>
+                {letter.type === "MASUK" ? "Masuk" : "Keluar"}
+              </span>
+            )}
             <span className={`status-badge status-${letter.status.toLowerCase()}`}>
               <span className="status-dot"></span>
               {letter.status === "ACTIVE" ? "Aktif" : "Arsip"}
-            </span>
-            <span className={`classification-badge classification-${letter.classification.toLowerCase()}`}>
-              Klasifikasi: {letter.classification}
             </span>
           </div>
         </div>
@@ -284,39 +344,95 @@ export default function LetterDetailPage() {
       {activeTab === "detail" && (
         <div style={{ display: "grid", gridTemplateColumns: "1.8fr 1fr", gap: "24px", alignItems: "start" }}>
           {/* Main Info */}
-          <div className="card" style={{ padding: "24px" }}>
+          <div className="card" style={{ padding: "24px", background: "var(--bg-elevated)", border: "1px solid var(--border-default)", borderRadius: "var(--radius-lg)" }}>
             <div className="detail-grid">
-              <div className="detail-item">
+              <div className="detail-item" style={{ gridColumn: "span 2" }}>
                 <div className="detail-label">Perihal</div>
-                <div className="detail-value" style={{ fontWeight: 600 }}>{letter.subject}</div>
+                <div className="detail-value" style={{ fontWeight: 600, fontSize: "16px", color: "var(--text-primary)" }}>{letter.subject}</div>
               </div>
-              <div className="detail-item">
-                <div className="detail-label">Nomor Surat</div>
-                <div className="detail-value">{letter.letterNumber}</div>
-              </div>
-              <div className="detail-item">
-                <div className="detail-label">Pengirim</div>
-                <div className="detail-value">{letter.sender}</div>
-              </div>
-              <div className="detail-item">
-                <div className="detail-label">Penerima</div>
-                <div className="detail-value">{letter.recipient}</div>
-              </div>
-              <div className="detail-item">
-                <div className="detail-label">Tanggal Surat</div>
-                <div className="detail-value">{formatDate(letter.letterDate)}</div>
-              </div>
-              <div className="detail-item">
-                <div className="detail-label">Diterima Pada</div>
-                <div className="detail-value">
-                  {letter.receivedDate ? formatDate(letter.receivedDate) : "-"}
-                </div>
-              </div>
-              <div className="detail-item">
+
+              {/* SPECIFIC FIELDS: SURAT AGENDA */}
+              {letter.category === "AGENDA" && (
+                <>
+                  <div className="detail-item">
+                    <div className="detail-label">Jenis Agenda</div>
+                    <div className="detail-value">{letter.agendaType}</div>
+                  </div>
+                  <div className="detail-item">
+                    <div className="detail-label">Kode Arsip</div>
+                    <div className="detail-value"><code className="mono">{letter.code || "—"}</code></div>
+                  </div>
+                  <div className="detail-item">
+                    <div className="detail-label">Tujuan Dokumen</div>
+                    <div className="detail-value">{letter.recipient}</div>
+                  </div>
+                  <div className="detail-item">
+                    <div className="detail-label">Tanggal Agenda</div>
+                    <div className="detail-value">{formatDate(letter.letterDate)}</div>
+                  </div>
+                </>
+              )}
+
+              {/* SPECIFIC FIELDS: KELUAR MASUK */}
+              {letter.category === "KELUAR_MASUK" && (
+                <>
+                  <div className="detail-item">
+                    <div className="detail-label">Pengirim</div>
+                    <div className="detail-value">{letter.sender || "—"}</div>
+                  </div>
+                  <div className="detail-item">
+                    <div className="detail-label">Penerima</div>
+                    <div className="detail-value">{letter.recipient || "—"}</div>
+                  </div>
+                  <div className="detail-item">
+                    <div className="detail-label">Tanggal Surat</div>
+                    <div className="detail-value">{formatDate(letter.letterDate)}</div>
+                  </div>
+                  <div className="detail-item">
+                    <div className="detail-label">Diterima Pada</div>
+                    <div className="detail-value">
+                      {letter.receivedDate ? formatDate(letter.receivedDate) : "—"}
+                    </div>
+                  </div>
+                  <div className="detail-item">
+                    <div className="detail-label">Nomor Berkas</div>
+                    <div className="detail-value">{letter.nomorBerkas || "—"}</div>
+                  </div>
+                  <div className="detail-item">
+                    <div className="detail-label">Nomor Petunjuk</div>
+                    <div className="detail-value">{letter.nomorPetunjuk || "—"}</div>
+                  </div>
+                </>
+              )}
+
+              {/* SPECIFIC FIELDS: NOTA VERIFIKASI */}
+              {letter.category === "NOTA_VERIFIKASI" && (
+                <>
+                  <div className="detail-item">
+                    <div className="detail-label">Nominal Verifikasi</div>
+                    <div className="detail-value" style={{ fontWeight: 700, fontSize: "16px", color: "var(--text-primary)" }}>
+                      {letter.nominal ? formatRupiah(letter.nominal) : "—"}
+                    </div>
+                  </div>
+                  <div className="detail-item">
+                    <div className="detail-label">Tanggal Verifikasi</div>
+                    <div className="detail-value">{formatDate(letter.letterDate)}</div>
+                  </div>
+                  <div className="detail-item">
+                    <div className="detail-label">Paraf / Disetujui Oleh</div>
+                    <div className="detail-value" style={{ fontStyle: "italic" }}>{letter.paraf || "—"}</div>
+                  </div>
+                  <div className="detail-item">
+                    {/* Empty cell spacer */}
+                  </div>
+                </>
+              )}
+
+              <div className="detail-item" style={{ borderTop: "1px solid var(--border-muted)", marginTop: "12px", paddingTop: "12px" }}>
                 <div className="detail-label">Didata Oleh</div>
                 <div className="detail-value">{letter.createdBy.name}</div>
               </div>
-              <div className="detail-item">
+              <div className="detail-item" style={{ borderTop: "1px solid var(--border-muted)", marginTop: "12px", paddingTop: "12px" }}>
                 <div className="detail-label">Tanggal Input</div>
                 <div className="detail-value">{formatDateTime(letter.createdAt)}</div>
               </div>
@@ -324,7 +440,7 @@ export default function LetterDetailPage() {
 
             {letter.description && (
               <div style={{ marginTop: "20px", paddingTop: "16px", borderTop: "1px solid var(--border-default)" }}>
-                <div className="detail-label">Keterangan / Catatan</div>
+                <div className="detail-label">Keterangan / Catatan Tambahan</div>
                 <div className="detail-value" style={{ lineHeight: 1.6, fontSize: "13px" }}>
                   {letter.description}
                 </div>
@@ -333,7 +449,7 @@ export default function LetterDetailPage() {
           </div>
 
           {/* Cryptographic Integrity Panel */}
-          <div className="card" style={{ padding: "24px", background: "var(--bg-subtle)" }}>
+          <div className="card" style={{ padding: "24px", background: "var(--bg-subtle)", border: "1px solid var(--border-default)", borderRadius: "var(--radius-lg)" }}>
             <div className="hash-label">
               <Key size={12} />
               Integritas Data Kriptografis
@@ -360,10 +476,34 @@ export default function LetterDetailPage() {
                 </div>
                 <div className="version-content">
                   <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "12px 24px", fontSize: "13px", color: "var(--text-secondary)" }}>
-                    <div><strong>Perihal:</strong> {v.subject}</div>
-                    <div><strong>Pengirim:</strong> {v.sender}</div>
-                    <div><strong>Penerima:</strong> {v.recipient}</div>
+                    <div style={{ gridColumn: "span 2" }}><strong>Perihal:</strong> {v.subject}</div>
+                    
+                    {letter.category === "AGENDA" && (
+                      <>
+                        <div><strong>Jenis Agenda:</strong> {v.agendaType}</div>
+                        <div><strong>Tujuan:</strong> {v.recipient}</div>
+                        <div><strong>Kode:</strong> {v.code || "—"}</div>
+                      </>
+                    )}
+
+                    {letter.category === "KELUAR_MASUK" && (
+                      <>
+                        <div><strong>Pengirim:</strong> {v.sender || "—"}</div>
+                        <div><strong>Penerima:</strong> {v.recipient || "—"}</div>
+                        <div><strong>No. Berkas:</strong> {v.nomorBerkas || "—"}</div>
+                        <div><strong>No. Petunjuk:</strong> {v.nomorPetunjuk || "—"}</div>
+                      </>
+                    )}
+
+                    {letter.category === "NOTA_VERIFIKASI" && (
+                      <>
+                        <div><strong>Nominal:</strong> {v.nominal ? formatRupiah(v.nominal) : "—"}</div>
+                        <div><strong>Paraf:</strong> {v.paraf || "—"}</div>
+                      </>
+                    )}
+
                     <div><strong>Klasifikasi:</strong> {v.classification}</div>
+                    <div><strong>Tanggal:</strong> {formatDate(v.letterDate)}</div>
                   </div>
                   {v.changeNote && (
                     <div style={{ marginTop: "12px", padding: "8px 12px", background: "var(--bg-subtle)", borderRadius: "var(--radius-sm)", fontSize: "12px", color: "var(--text-secondary)", borderLeft: "2px solid var(--accent)" }}>
@@ -419,51 +559,133 @@ export default function LetterDetailPage() {
       {/* Edit Modal */}
       {showEdit && (
         <div className="modal-overlay" onClick={(e) => e.target === e.currentTarget && setShowEdit(false)}>
-          <div className="modal">
+          <div className="modal" style={{ maxWidth: "580px" }}>
             <div className="modal-header">
-              <h3>Ubah Data Surat</h3>
+              <h3>Ubah Data Dokumen</h3>
               <button className="modal-close" onClick={() => setShowEdit(false)}>
                 <X size={16} />
               </button>
             </div>
             <form action={handleEdit}>
-              <div className="form-group">
-                <label className="form-label" htmlFor="subject">Perihal</label>
-                <input id="subject" name="subject" className="form-input" defaultValue={letter.subject} required />
-              </div>
-              <div className="form-row">
-                <div className="form-group">
-                  <label className="form-label" htmlFor="sender">Pengirim</label>
-                  <input id="sender" name="sender" className="form-input" defaultValue={letter.sender} required />
-                </div>
-                <div className="form-group">
-                  <label className="form-label" htmlFor="recipient">Penerima</label>
-                  <input id="recipient" name="recipient" className="form-input" defaultValue={letter.recipient} required />
-                </div>
-              </div>
-              <div className="form-row">
-                <div className="form-group">
-                  <label className="form-label" htmlFor="letterDate">Tanggal Surat</label>
-                  <input id="letterDate" name="letterDate" type="date" className="form-input" defaultValue={new Date(letter.letterDate).toISOString().split("T")[0]} required />
-                </div>
-                <div className="form-group">
-                  <label className="form-label" htmlFor="classification">Klasifikasi</label>
-                  <select id="classification" name="classification" className="form-select" defaultValue={letter.classification}>
-                    <option value="BIASA">Biasa</option>
-                    <option value="PENTING">Penting</option>
-                    <option value="RAHASIA">Rahasia</option>
-                  </select>
-                </div>
-              </div>
-              <div className="form-group">
-                <label className="form-label" htmlFor="description">Keterangan</label>
-                <textarea id="description" name="description" className="form-textarea" defaultValue={letter.description || ""} rows={3} />
+              {/* SPECIFIC FIELDS FOR AGENDA */}
+              {letter.category === "AGENDA" && (
+                <>
+                  <div className="form-row">
+                    <div className="form-group">
+                      <label className="form-label" htmlFor="agendaType">Jenis Agenda</label>
+                      <select id="agendaType" name="agendaType" className="form-select" defaultValue={letter.agendaType || ""} required>
+                        {agendaTypes.map((t) => (
+                          <option key={t} value={t}>{t}</option>
+                        ))}
+                      </select>
+                    </div>
+                    <div className="form-group">
+                      <label className="form-label" htmlFor="code">Kode Arsip</label>
+                      <input id="code" name="code" className="form-input" defaultValue={letter.code || ""} />
+                    </div>
+                  </div>
+                  <div className="form-group">
+                    <label className="form-label" htmlFor="subject">Perihal *</label>
+                    <input id="subject" name="subject" className="form-input" defaultValue={letter.subject} required />
+                  </div>
+                  <div className="form-row">
+                    <div className="form-group">
+                      <label className="form-label" htmlFor="recipient">Tujuan *</label>
+                      <input id="recipient" name="recipient" className="form-input" defaultValue={letter.recipient || ""} required />
+                    </div>
+                    <div className="form-group">
+                      <label className="form-label" htmlFor="letterDate">Tanggal Agenda *</label>
+                      <input id="letterDate" name="letterDate" type="date" className="form-input" defaultValue={new Date(letter.letterDate).toISOString().split("T")[0]} required />
+                    </div>
+                  </div>
+                </>
+              )}
+
+              {/* SPECIFIC FIELDS FOR KELUAR MASUK */}
+              {letter.category === "KELUAR_MASUK" && (
+                <>
+                  <div className="form-group">
+                    <label className="form-label" htmlFor="subject">Perihal *</label>
+                    <input id="subject" name="subject" className="form-input" defaultValue={letter.subject} required />
+                  </div>
+                  <div className="form-row">
+                    <div className="form-group">
+                      <label className="form-label" htmlFor="sender">Pengirim *</label>
+                      <input id="sender" name="sender" className="form-input" defaultValue={letter.sender || ""} required />
+                    </div>
+                    <div className="form-group">
+                      <label className="form-label" htmlFor="recipient">Penerima *</label>
+                      <input id="recipient" name="recipient" className="form-input" defaultValue={letter.recipient || ""} required />
+                    </div>
+                  </div>
+                  <div className="form-row">
+                    <div className="form-group">
+                      <label className="form-label" htmlFor="letterDate">Tanggal Surat *</label>
+                      <input id="letterDate" name="letterDate" type="date" className="form-input" defaultValue={new Date(letter.letterDate).toISOString().split("T")[0]} required />
+                    </div>
+                    <div className="form-group">
+                      <label className="form-label" htmlFor="classification">Klasifikasi</label>
+                      <select id="classification" name="classification" className="form-select" defaultValue={letter.classification}>
+                        <option value="BIASA">Biasa</option>
+                        <option value="PENTING">Penting</option>
+                        <option value="RAHASIA">Rahasia</option>
+                      </select>
+                    </div>
+                  </div>
+                  <div className="form-row">
+                    <div className="form-group">
+                      <label className="form-label" htmlFor="nomorBerkas">Nomor Berkas</label>
+                      <input id="nomorBerkas" name="nomorBerkas" className="form-input" defaultValue={letter.nomorBerkas || ""} />
+                    </div>
+                    <div className="form-group">
+                      <label className="form-label" htmlFor="nomorPetunjuk">Nomor Petunjuk</label>
+                      <input id="nomorPetunjuk" name="nomorPetunjuk" className="form-input" defaultValue={letter.nomorPetunjuk || ""} />
+                    </div>
+                  </div>
+                </>
+              )}
+
+              {/* SPECIFIC FIELDS FOR NOTA VERIFIKASI */}
+              {letter.category === "NOTA_VERIFIKASI" && (
+                <>
+                  <div className="form-group">
+                    <label className="form-label" htmlFor="subject">Perihal Verifikasi *</label>
+                    <input id="subject" name="subject" className="form-input" defaultValue={letter.subject} required />
+                  </div>
+                  <div className="form-row">
+                    <div className="form-group">
+                      <label className="form-label" htmlFor="nominal">Nominal Keuangan (Rp) *</label>
+                      <input
+                        id="nominal"
+                        type="text"
+                        className="form-input"
+                        value={nominalRaw}
+                        onChange={(e) => handleNominalChange(e.target.value)}
+                        required
+                      />
+                    </div>
+                    <div className="form-group">
+                      <label className="form-label" htmlFor="letterDate">Tanggal Verifikasi *</label>
+                      <input id="letterDate" name="letterDate" type="date" className="form-input" defaultValue={new Date(letter.letterDate).toISOString().split("T")[0]} required />
+                    </div>
+                  </div>
+                  <div className="form-group">
+                    <label className="form-label" htmlFor="paraf">Paraf / Disetujui Oleh *</label>
+                    <input id="paraf" name="paraf" className="form-input" defaultValue={letter.paraf || ""} required />
+                  </div>
+                </>
+              )}
+
+              <div className="form-group" style={{ marginTop: "12px" }}>
+                <label className="form-label" htmlFor="description">Keterangan Tambahan</label>
+                <textarea id="description" name="description" className="form-textarea" defaultValue={letter.description || ""} rows={2} />
               </div>
               <div className="form-group">
                 <label className="form-label" htmlFor="changeNote">Catatan Perubahan *</label>
-                <input id="changeNote" name="changeNote" className="form-input" placeholder="Alasan mengapa data diubah..." required />
+                <input id="changeNote" name="changeNote" className="form-input" placeholder="Alasan mengapa data dokumen diubah..." required />
               </div>
-              <div className="modal-actions">
+              
+              <div className="modal-actions" style={{ marginTop: "20px" }}>
                 <button type="button" className="btn btn-secondary" onClick={() => setShowEdit(false)}>Batal</button>
                 <button type="submit" className="btn btn-primary" disabled={editLoading}>
                   <Save size={14} />
@@ -509,7 +731,7 @@ export default function LetterDetailPage() {
                 disabled={archiveLoading || archiveReason.trim().length < 10}
               >
                 <Archive size={14} />
-                {archiveLoading ? "Memproses..." : "Arsipkan Surat"}
+                {archiveLoading ? "Memproses..." : "Arsipkan Dokumen"}
               </button>
             </div>
           </div>

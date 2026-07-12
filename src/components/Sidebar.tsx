@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { usePathname, useSearchParams } from "next/navigation";
 import { logoutAction } from "@/actions/auth";
 import { ThemeSwitcher } from "@/components/ThemeSwitcher";
 import {
@@ -49,17 +49,28 @@ const adminGroup = {
 
 export function Sidebar({ user }: SidebarProps) {
   const pathname = usePathname();
+  const searchParams = useSearchParams();
+  const currentType = searchParams.get("type");
 
   const groups = user.role === "ADMIN" ? [...navGroups, adminGroup] : navGroups;
 
   function isActive(href: string): boolean {
-    const basePath = href.split("?")[0];
-    if (basePath === "/dashboard") return pathname === "/dashboard";
-    if (basePath === "/dashboard/audit-logs") return pathname === "/dashboard/audit-logs";
-    if (basePath === "/dashboard/letters") {
-      return pathname === "/dashboard/letters" || pathname.startsWith("/dashboard/letters/");
+    const url = new URL(href, "http://localhost");
+    const basePath = url.pathname;
+    const typeParam = url.searchParams.get("type");
+
+    if (basePath !== pathname) {
+      if (basePath === "/dashboard/letters" && pathname.startsWith("/dashboard/letters/")) {
+        return true;
+      }
+      return false;
     }
-    return false;
+
+    if (basePath === "/dashboard/letters") {
+      return typeParam === currentType;
+    }
+
+    return true;
   }
 
   return (

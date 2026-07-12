@@ -111,30 +111,32 @@
 /* ============================================ */
 /* Base                                         */
 /* ============================================ */
-* {
-  margin: 0;
-  padding: 0;
-  box-sizing: border-box;
-}
+@layer base {
+  * {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+  }
 
-html {
-  scroll-behavior: smooth;
-  color-scheme: light;
-}
+  html {
+    scroll-behavior: smooth;
+    color-scheme: light;
+  }
 
-html.dark {
-  color-scheme: dark;
-}
+  html.dark {
+    color-scheme: dark;
+  }
 
-body {
-  font-family: var(--font-sans);
-  background: var(--bg-root);
-  color: var(--text-primary);
-  min-height: 100vh;
-  -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
-  font-feature-settings: 'cv02', 'cv03', 'cv04', 'cv11';
-  transition: background-color 0.2s ease, color 0.2s ease;
+  body {
+    font-family: var(--font-sans);
+    background: var(--bg-root);
+    color: var(--text-primary);
+    min-height: 100vh;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    font-feature-settings: 'cv02', 'cv03', 'cv04', 'cv11';
+    transition: background-color 0.2s ease, color 0.2s ease;
+  }
 }
 
 .app-layout {

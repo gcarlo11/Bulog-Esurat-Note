@@ -10,27 +10,24 @@ const COMPANY_DIVISION = "KANTOR WILAYAH SUMATERA SELATAN & BANGKA BELITUNG";
 const COMPANY_ADDRESS = "Jl. Kapten A. Rivai No. 35, Palembang 30129";
 const COMPANY_PHONE = "Telp: (0711) 350-xxx | Fax: (0711) 350-xxx";
 
-// ============================================
-// Tipe Data
-// ============================================
 interface LetterExportData {
+  id: string;
   letterNumber: string;
-  type: string;
+  category: string;
+  type: string | null;
   subject: string;
-  sender: string;
-  recipient: string;
+  sender: string | null;
+  recipient: string | null;
   letterDate: Date | string;
   classification: string;
   status: string;
+  agendaType: string | null;
+  code: string | null;
+  nomorBerkas: string | null;
+  nomorPetunjuk: string | null;
+  nominal: number | null;
+  paraf: string | null;
   createdBy: { name: string };
-}
-
-function formatDate(date: Date | string) {
-  return new Date(date).toLocaleDateString("id-ID", {
-    day: "2-digit",
-    month: "long",
-    year: "numeric",
-  });
 }
 
 function formatDateShort(date: Date | string) {
@@ -39,6 +36,14 @@ function formatDateShort(date: Date | string) {
     month: "short",
     year: "numeric",
   });
+}
+
+function formatRupiah(value: number) {
+  return new Intl.NumberFormat("id-ID", {
+    style: "currency",
+    currency: "IDR",
+    minimumFractionDigits: 0,
+  }).format(value);
 }
 
 // ============================================
@@ -52,6 +57,119 @@ export function exportToExcel(letters: LetterExportData[], filterLabel: string) 
     year: "numeric",
   });
 
+  // Determine column headers and row mapping based on category
+  let columnHeaders: string[] = [];
+  let dataRows: any[][] = [];
+
+  // Check if all letters share the same category
+  const firstCategory = letters.length > 0 ? letters[0].category : "ALL";
+  const isUniformCategory = letters.every((l) => l.category === firstCategory);
+  const activeCategory = isUniformCategory ? firstCategory : "ALL";
+
+  if (activeCategory === "AGENDA") {
+    columnHeaders = [
+      "No",
+      "Nomor Agenda",
+      "Jenis Agenda",
+      "Perihal",
+      "Tujuan",
+      "Tanggal Agenda",
+      "Kode Arsip",
+      "Status",
+      "Didata Oleh",
+    ];
+    dataRows = letters.map((l, i) => [
+      i + 1,
+      l.letterNumber,
+      l.agendaType || "—",
+      l.subject,
+      l.recipient || "—",
+      formatDateShort(l.letterDate),
+      l.code || "—",
+      l.status === "ACTIVE" ? "Aktif" : "Arsip",
+      l.createdBy.name,
+    ]);
+  } else if (activeCategory === "KELUAR_MASUK") {
+    columnHeaders = [
+      "No",
+      "Nomor Surat",
+      "Tipe",
+      "Perihal",
+      "Pengirim",
+      "Penerima",
+      "Tanggal Surat",
+      "No. Berkas",
+      "No. Petunjuk",
+      "Status",
+      "Didata Oleh",
+    ];
+    dataRows = letters.map((l, i) => [
+      i + 1,
+      l.letterNumber,
+      l.type === "MASUK" ? "Masuk" : "Keluar",
+      l.subject,
+      l.sender || "—",
+      l.recipient || "—",
+      formatDateShort(l.letterDate),
+      l.nomorBerkas || "—",
+      l.nomorPetunjuk || "—",
+      l.status === "ACTIVE" ? "Aktif" : "Arsip",
+      l.createdBy.name,
+    ]);
+  } else if (activeCategory === "NOTA_VERIFIKASI") {
+    columnHeaders = [
+      "No",
+      "Nomor Nota",
+      "Perihal",
+      "Tanggal Verifikasi",
+      "Nominal",
+      "Paraf",
+      "Status",
+      "Didata Oleh",
+    ];
+    dataRows = letters.map((l, i) => [
+      i + 1,
+      l.letterNumber,
+      l.subject,
+      formatDateShort(l.letterDate),
+      l.nominal ? formatRupiah(l.nominal) : "—",
+      l.paraf || "—",
+      l.status === "ACTIVE" ? "Aktif" : "Arsip",
+      l.createdBy.name,
+    ]);
+  } else {
+    // ALL categories
+    columnHeaders = [
+      "No",
+      "Nomor Dokumen",
+      "Kategori",
+      "Perihal",
+      "Pihak Terkait",
+      "Tanggal",
+      "Detail Spesifik",
+      "Status",
+      "Didata Oleh",
+    ];
+    dataRows = letters.map((l, i) => {
+      let detail = "—";
+      if (l.category === "AGENDA") detail = `Jenis: ${l.agendaType}`;
+      else if (l.category === "KELUAR_MASUK") detail = `Tipe: ${l.type}`;
+      else if (l.category === "NOTA_VERIFIKASI") detail = `Nominal: ${l.nominal ? formatRupiah(l.nominal) : "—"}`;
+
+      return [
+        i + 1,
+        l.letterNumber,
+        l.category.replace("_", " "),
+        l.subject,
+        l.recipient || l.sender || "—",
+        formatDateShort(l.letterDate),
+        detail,
+        l.status === "ACTIVE" ? "Aktif" : "Arsip",
+        l.createdBy.name,
+      ];
+    });
+  }
+
   // Header rows (kop surat)
   const headerRows = [
     [COMPANY_NAME],
@@ -64,72 +182,29 @@ export function exportToExcel(letters: LetterExportData[], filterLabel: string) 
     [""],
   ];
 
-  // Column headers
-  const columnHeaders = [
-    "No",
-    "Nomor Surat",
-    "Tipe",
-    "Perihal",
-    "Pengirim",
-    "Penerima",
-    "Tanggal Surat",
-    "Klasifikasi",
-    "Status",
-    "Didata Oleh",
-  ];
-
-  // Data rows
-  const dataRows = letters.map((letter, i) => [
-    i + 1,
-    letter.letterNumber,
-    letter.type === "MASUK" ? "Masuk" : "Keluar",
-    letter.subject,
-    letter.sender,
-    letter.recipient,
-    formatDateShort(letter.letterDate),
-    letter.classification,
-    letter.status === "ACTIVE" ? "Aktif" : "Arsip",
-    letter.createdBy.name,
-  ]);
-
-  // Combine all rows
   const allRows = [...headerRows, columnHeaders, ...dataRows];
-
-  // Create worksheet
   const ws = XLSX.utils.aoa_to_sheet(allRows);
 
-  // Merge cells for header
+  const colCount = columnHeaders.length;
   ws["!merges"] = [
-    { s: { r: 0, c: 0 }, e: { r: 0, c: 9 } }, // PERUM BULOG
-    { s: { r: 1, c: 0 }, e: { r: 1, c: 9 } }, // Division
-    { s: { r: 2, c: 0 }, e: { r: 2, c: 9 } }, // Address
-    { s: { r: 3, c: 0 }, e: { r: 3, c: 9 } }, // Phone
-    { s: { r: 5, c: 0 }, e: { r: 5, c: 9 } }, // Title
-    { s: { r: 6, c: 0 }, e: { r: 6, c: 9 } }, // Date
+    { s: { r: 0, c: 0 }, e: { r: 0, c: colCount - 1 } },
+    { s: { r: 1, c: 0 }, e: { r: 1, c: colCount - 1 } },
+    { s: { r: 2, c: 0 }, e: { r: 2, c: colCount - 1 } },
+    { s: { r: 3, c: 0 }, e: { r: 3, c: colCount - 1 } },
+    { s: { r: 5, c: 0 }, e: { r: 5, c: colCount - 1 } },
+    { s: { r: 6, c: 0 }, e: { r: 6, c: colCount - 1 } },
   ];
 
-  // Column widths
-  ws["!cols"] = [
-    { wch: 4 },   // No
-    { wch: 20 },  // Nomor Surat
-    { wch: 8 },   // Tipe
-    { wch: 35 },  // Perihal
-    { wch: 25 },  // Pengirim
-    { wch: 25 },  // Penerima
-    { wch: 16 },  // Tanggal
-    { wch: 12 },  // Klasifikasi
-    { wch: 8 },   // Status
-    { wch: 18 },  // Didata Oleh
-  ];
+  // Auto-width logic or standard widths
+  ws["!cols"] = Array(colCount).fill({ wch: 15 });
+  ws["!cols"][0] = { wch: 4 }; // No
+  ws["!cols"][1] = { wch: 22 }; // Nomor
+  ws["!cols"][3] = { wch: 35 }; // Perihal
 
-  // Create workbook
   const wb = XLSX.utils.book_new();
-  XLSX.utils.book_append_sheet(wb, ws, "Data Surat");
+  XLSX.utils.book_append_sheet(wb, ws, "Rekap Dokumen");
 
-  // Generate filename
-  const filename = `surat_${filterLabel.toLowerCase().replace(/\s+/g, "_")}_${now.toISOString().split("T")[0]}.xlsx`;
-
-  // Download
+  const filename = `rekap_${filterLabel.toLowerCase().replace(/\s+/g, "_")}_${now.toISOString().split("T")[0]}.xlsx`;
   XLSX.writeFile(wb, filename);
 }
 
@@ -144,78 +219,147 @@ export function exportToPdf(letters: LetterExportData[], filterLabel: string) {
     year: "numeric",
   });
 
-  // Create PDF (landscape A4)
   const doc = new jsPDF({ orientation: "landscape", unit: "mm", format: "a4" });
-
   const pageWidth = doc.internal.pageSize.getWidth();
 
-  // ---- Kop Surat ----
-  // Company name
+  // Kop Surat
   doc.setFontSize(16);
   doc.setFont("helvetica", "bold");
   doc.text(COMPANY_NAME, pageWidth / 2, 18, { align: "center" });
 
-  // Division
   doc.setFontSize(11);
-  doc.setFont("helvetica", "bold");
   doc.text(COMPANY_DIVISION, pageWidth / 2, 25, { align: "center" });
 
-  // Address
   doc.setFontSize(9);
   doc.setFont("helvetica", "normal");
   doc.text(COMPANY_ADDRESS, pageWidth / 2, 31, { align: "center" });
 
-  // Phone
   doc.setFontSize(8);
   doc.text(COMPANY_PHONE, pageWidth / 2, 36, { align: "center" });
 
-  // Garis pemisah kop
   doc.setLineWidth(0.8);
   doc.line(14, 39, pageWidth - 14, 39);
   doc.setLineWidth(0.3);
   doc.line(14, 40, pageWidth - 14, 40);
 
-  // Title
   doc.setFontSize(12);
   doc.setFont("helvetica", "bold");
-  doc.text(`REKAPITULASI ${filterLabel.toUpperCase()}`, pageWidth / 2, 48, {
-    align: "center",
-  });
+  doc.text(`REKAPITULASI ${filterLabel.toUpperCase()}`, pageWidth / 2, 48, { align: "center" });
 
-  // Date
   doc.setFontSize(9);
   doc.setFont("helvetica", "normal");
   doc.text(`Per Tanggal: ${dateStr}`, pageWidth / 2, 54, { align: "center" });
 
-  // ---- Data Table ----
-  const tableData = letters.map((letter, i) => [
-    (i + 1).toString(),
-    letter.letterNumber,
-    letter.type === "MASUK" ? "Masuk" : "Keluar",
-    letter.subject,
-    letter.sender,
-    letter.recipient,
-    formatDateShort(letter.letterDate),
-    letter.classification,
-    letter.status === "ACTIVE" ? "Aktif" : "Arsip",
-  ]);
+  // Map fields dynamically based on category
+  const firstCategory = letters.length > 0 ? letters[0].category : "ALL";
+  const isUniformCategory = letters.every((l) => l.category === firstCategory);
+  const activeCategory = isUniformCategory ? firstCategory : "ALL";
+
+  let headers: string[] = [];
+  let bodyData: string[][] = [];
+  let columnStyles: any = {};
+
+  if (activeCategory === "AGENDA") {
+    headers = ["No", "Nomor Agenda", "Jenis Agenda", "Perihal", "Tujuan", "Tanggal", "Kode", "Status"];
+    bodyData = letters.map((l, i) => [
+      (i + 1).toString(),
+      l.letterNumber,
+      l.agendaType || "—",
+      l.subject,
+      l.recipient || "—",
+      formatDateShort(l.letterDate),
+      l.code || "—",
+      l.status === "ACTIVE" ? "Aktif" : "Arsip",
+    ]);
+    columnStyles = {
+      0: { halign: "center", cellWidth: 10 },
+      1: { cellWidth: 32 },
+      2: { cellWidth: 35 },
+      3: { cellWidth: 60 },
+      4: { cellWidth: 40 },
+      5: { halign: "center", cellWidth: 25 },
+      6: { halign: "center", cellWidth: 20 },
+      7: { halign: "center", cellWidth: 18 },
+    };
+  } else if (activeCategory === "KELUAR_MASUK") {
+    headers = ["No", "Nomor Surat", "Tipe", "Perihal", "Pengirim", "Penerima", "Tanggal", "No. Berkas", "No. Petunjuk"];
+    bodyData = letters.map((l, i) => [
+      (i + 1).toString(),
+      l.letterNumber,
+      l.type === "MASUK" ? "Masuk" : "Keluar",
+      l.subject,
+      l.sender || "—",
+      l.recipient || "—",
+      formatDateShort(l.letterDate),
+      l.nomorBerkas || "—",
+      l.nomorPetunjuk || "—",
+    ]);
+    columnStyles = {
+      0: { halign: "center", cellWidth: 10 },
+      1: { cellWidth: 30 },
+      2: { halign: "center", cellWidth: 16 },
+      3: { cellWidth: 55 },
+      4: { cellWidth: 35 },
+      5: { cellWidth: 35 },
+      6: { halign: "center", cellWidth: 24 },
+      7: { cellWidth: 20 },
+      8: { cellWidth: 20 },
+    };
+  } else if (activeCategory === "NOTA_VERIFIKASI") {
+    headers = ["No", "Nomor Nota", "Perihal", "Tanggal", "Nominal", "Paraf", "Status"];
+    bodyData = letters.map((l, i) => [
+      (i + 1).toString(),
+      l.letterNumber,
+      l.subject,
+      formatDateShort(l.letterDate),
+      l.nominal ? formatRupiah(l.nominal) : "—",
+      l.paraf || "—",
+      l.status === "ACTIVE" ? "Aktif" : "Arsip",
+    ]);
+    columnStyles = {
+      0: { halign: "center", cellWidth: 12 },
+      1: { cellWidth: 40 },
+      2: { cellWidth: 80 },
+      3: { halign: "center", cellWidth: 30 },
+      4: { halign: "right", cellWidth: 35 },
+      5: { halign: "center", cellWidth: 35 },
+      6: { halign: "center", cellWidth: 20 },
+    };
+  } else {
+    headers = ["No", "Nomor Dokumen", "Kategori", "Perihal", "Penerima/Tujuan", "Tanggal", "Detail Info", "Status"];
+    bodyData = letters.map((l, i) => {
+      let detail = "—";
+      if (l.category === "AGENDA") detail = `Jenis: ${l.agendaType}`;
+      else if (l.category === "KELUAR_MASUK") detail = `Tipe: ${l.type}`;
+      else if (l.category === "NOTA_VERIFIKASI") detail = `Nominal: ${l.nominal ? formatRupiah(l.nominal) : "—"}`;
+
+      return [
+        (i + 1).toString(),
+        l.letterNumber,
+        l.category.replace("_", " "),
+        l.subject,
+        l.recipient || l.sender || "—",
+        formatDateShort(l.letterDate),
+        detail,
+        l.status === "ACTIVE" ? "Aktif" : "Arsip",
+      ];
+    });
+    columnStyles = {
+      0: { halign: "center", cellWidth: 10 },
+      1: { cellWidth: 30 },
+      2: { cellWidth: 28 },
+      3: { cellWidth: 55 },
+      4: { cellWidth: 40 },
+      5: { halign: "center", cellWidth: 24 },
+      6: { cellWidth: 35 },
+      7: { halign: "center", cellWidth: 18 },
+    };
+  }
 
   autoTable(doc, {
     startY: 58,
-    head: [
-      [
-        "No",
-        "Nomor Surat",
-        "Tipe",
-        "Perihal",
-        "Pengirim",
-        "Penerima",
-        "Tanggal",
-        "Klasifikasi",
-        "Status",
-      ],
-    ],
-    body: tableData,
+    head: [headers],
+    body: bodyData,
     theme: "grid",
     styles: {
       fontSize: 8,
@@ -230,22 +374,11 @@ export function exportToPdf(letters: LetterExportData[], filterLabel: string) {
       halign: "center",
       fontSize: 8,
     },
-    columnStyles: {
-      0: { halign: "center", cellWidth: 10 },
-      1: { cellWidth: 32 },
-      2: { halign: "center", cellWidth: 16 },
-      3: { cellWidth: 55 },
-      4: { cellWidth: 35 },
-      5: { cellWidth: 35 },
-      6: { halign: "center", cellWidth: 24 },
-      7: { halign: "center", cellWidth: 22 },
-      8: { halign: "center", cellWidth: 16 },
-    },
+    columnStyles,
     alternateRowStyles: {
       fillColor: [248, 248, 248],
     },
     didDrawPage: (data) => {
-      // Footer pada setiap halaman
       const pageCount = doc.getNumberOfPages();
       doc.setFontSize(7);
       doc.setFont("helvetica", "normal");
@@ -264,9 +397,6 @@ export function exportToPdf(letters: LetterExportData[], filterLabel: string) {
     },
   });
 
-  // Generate filename
-  const filename = `surat_${filterLabel.toLowerCase().replace(/\s+/g, "_")}_${now.toISOString().split("T")[0]}.pdf`;
-
-  // Download
+  const filename = `rekap_${filterLabel.toLowerCase().replace(/\s+/g, "_")}_${now.toISOString().split("T")[0]}.pdf`;
   doc.save(filename);
 }
