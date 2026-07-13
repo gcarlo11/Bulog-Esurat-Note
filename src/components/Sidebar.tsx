@@ -6,9 +6,10 @@ import { logoutAction } from "@/actions/auth";
 import { ThemeSwitcher } from "@/components/ThemeSwitcher";
 import {
   LayoutDashboard,
+  BookOpen,
   Mail,
-  Send,
-  FileText,
+  FileCheck,
+  Layers,
   ShieldCheck,
   LogOut,
   Inbox,
@@ -33,9 +34,10 @@ const navGroups = [
   {
     label: "Pencatatan",
     items: [
-      { name: "Surat Masuk", href: "/dashboard/letters?type=MASUK", icon: Mail },
-      { name: "Surat Keluar", href: "/dashboard/letters?type=KELUAR", icon: Send },
-      { name: "Semua Surat", href: "/dashboard/letters", icon: FileText },
+      { name: "Surat Agenda", href: "/dashboard/letters?category=AGENDA", icon: BookOpen },
+      { name: "Surat Keluar / Masuk", href: "/dashboard/letters?category=KELUAR_MASUK", icon: Mail },
+      { name: "Nota Verifikasi", href: "/dashboard/letters?category=NOTA_VERIFIKASI", icon: FileCheck },
+      { name: "Semua Dokumen", href: "/dashboard/letters", icon: Layers },
     ],
   },
 ];
@@ -50,14 +52,14 @@ const adminGroup = {
 export function Sidebar({ user }: SidebarProps) {
   const pathname = usePathname();
   const searchParams = useSearchParams();
-  const currentType = searchParams.get("type");
+  const currentCategory = searchParams.get("category") || "ALL";
 
   const groups = user.role === "ADMIN" ? [...navGroups, adminGroup] : navGroups;
 
   function isActive(href: string): boolean {
     const url = new URL(href, "http://localhost");
     const basePath = url.pathname;
-    const typeParam = url.searchParams.get("type");
+    const categoryParam = url.searchParams.get("category") || "ALL";
 
     if (basePath !== pathname) {
       if (basePath === "/dashboard/letters" && pathname.startsWith("/dashboard/letters/")) {
@@ -67,7 +69,7 @@ export function Sidebar({ user }: SidebarProps) {
     }
 
     if (basePath === "/dashboard/letters") {
-      return typeParam === currentType;
+      return categoryParam === currentCategory;
     }
 
     return true;
@@ -80,7 +82,7 @@ export function Sidebar({ user }: SidebarProps) {
         <div className="sidebar-brand-icon">
           <Inbox size={16} strokeWidth={2.5} />
         </div>
-        <h1>E-Surat</h1>
+        <h1>BULOG E-Surat</h1>
       </div>
 
       {/* Navigation */}
