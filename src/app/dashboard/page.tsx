@@ -2,6 +2,7 @@ import { getDashboardStats } from "@/actions/letters";
 import { getAuthenticatedUser } from "@/lib/auth";
 import Link from "next/link";
 import { generateLetterHash } from "@/lib/hash";
+import { DashboardFilters } from "@/components/DashboardFilters";
 import {
   FileText,
   Inbox,
@@ -31,9 +32,22 @@ function getActionLabel(action: string) {
   return map[action] || action;
 }
 
-export default async function DashboardPage() {
+export default async function DashboardPage({
+  searchParams,
+}: {
+  searchParams: Promise<{
+    date?: string;
+    month?: string;
+    year?: string;
+  }>;
+}) {
   const user = await getAuthenticatedUser();
-  const stats = await getDashboardStats();
+  const resolvedParams = await searchParams;
+  const stats = await getDashboardStats({
+    date: resolvedParams.date,
+    month: resolvedParams.month ? parseInt(resolvedParams.month, 10) : undefined,
+    year: resolvedParams.year ? parseInt(resolvedParams.year, 10) : undefined,
+  });
 
   return (
     <div className="page-container">
@@ -50,6 +64,9 @@ export default async function DashboardPage() {
           </Link>
         )}
       </div>
+
+      {/* Date/Month/Year filters */}
+      <DashboardFilters />
 
       {/* Stats Grid */}
       <div className="stats-grid">

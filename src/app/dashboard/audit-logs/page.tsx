@@ -45,11 +45,21 @@ export default function AuditLogsPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
 
+  // Filter Tanggal / Bulan / Tahun
+  const [filterDate, setFilterDate] = useState("");
+  const [filterMonth, setFilterMonth] = useState("");
+  const [filterYear, setFilterYear] = useState("");
+
   const fetchLogs = useCallback(async () => {
     setLoading(true);
     setError("");
     try {
-      const result = await getAuditLogs({ page });
+      const result = await getAuditLogs({
+        page,
+        date: filterDate || undefined,
+        month: filterMonth ? parseInt(filterMonth, 10) : undefined,
+        year: filterYear ? parseInt(filterYear, 10) : undefined,
+      });
       setLogs(result.logs as AuditLogEntry[]);
       setTotalPages(result.totalPages);
       setTotal(result.total);
@@ -58,7 +68,7 @@ export default function AuditLogsPage() {
     } finally {
       setLoading(false);
     }
-  }, [page]);
+  }, [page, filterDate, filterMonth, filterYear]);
 
   useEffect(() => {
     fetchLogs();
@@ -87,9 +97,81 @@ export default function AuditLogsPage() {
       </div>
 
       <div className="table-wrapper" style={{ border: "1px solid var(--border-default)" }}>
-        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "12px 16px", borderBottom: "1px solid var(--border-default)", gap: "12px" }}>
-          <div style={{ fontSize: "13px", fontWeight: 600, color: "var(--text-primary)" }}>
-            Log Aktivitas Keamanan
+        <div style={{ display: "flex", flexWrap: "wrap", alignItems: "center", justifyContent: "space-between", padding: "12px 16px", borderBottom: "1px solid var(--border-default)", gap: "12px" }}>
+          <div style={{ display: "flex", gap: "12px", alignItems: "center", flexWrap: "wrap" }}>
+            <div style={{ fontSize: "13px", fontWeight: 600, color: "var(--text-primary)" }}>
+              Log Aktivitas Keamanan
+            </div>
+            
+            {/* Date Filters */}
+            <div style={{ display: "flex", gap: "6px", alignItems: "center" }}>
+              <input
+                type="date"
+                className="filter-select"
+                value={filterDate}
+                onChange={(e) => {
+                  setFilterDate(e.target.value);
+                  setFilterMonth("");
+                  setFilterYear("");
+                  setPage(1);
+                }}
+                title="Filter Tanggal Spesifik"
+              />
+              <select
+                className="filter-select"
+                value={filterMonth}
+                onChange={(e) => {
+                  setFilterMonth(e.target.value);
+                  setFilterDate("");
+                  setPage(1);
+                }}
+                title="Filter Bulan"
+              >
+                <option value="">Semua Bulan</option>
+                <option value="1">Januari</option>
+                <option value="2">Februari</option>
+                <option value="3">Maret</option>
+                <option value="4">April</option>
+                <option value="5">Mei</option>
+                <option value="6">Juni</option>
+                <option value="7">Juli</option>
+                <option value="8">Agustus</option>
+                <option value="9">September</option>
+                <option value="10">Oktober</option>
+                <option value="11">November</option>
+                <option value="12">Desember</option>
+              </select>
+              <input
+                type="number"
+                className="filter-select"
+                style={{ width: "90px" }}
+                placeholder="Tahun"
+                value={filterYear}
+                onChange={(e) => {
+                  setFilterYear(e.target.value);
+                  setFilterDate("");
+                  setPage(1);
+                }}
+                min="2000"
+                max="2100"
+                title="Filter Tahun"
+              />
+              {(filterDate || filterMonth || filterYear) && (
+                <button
+                  type="button"
+                  className="btn btn-secondary btn-sm"
+                  onClick={() => {
+                    setFilterDate("");
+                    setFilterMonth("");
+                    setFilterYear("");
+                    setPage(1);
+                  }}
+                  style={{ height: "32px", padding: "0 10px" }}
+                >
+                  Reset
+                </button>
+              )}
+            </div>
           </div>
           <div style={{ fontSize: "12px", color: "var(--text-tertiary)" }}>
             {total} aktivitas tercatat

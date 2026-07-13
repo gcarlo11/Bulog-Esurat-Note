@@ -72,11 +72,16 @@ export function CreateLetterModal({ onClose, onSuccess }: CreateLetterModalProps
   return (
     <div className="modal-overlay" onClick={(e) => e.target === e.currentTarget && onClose()}>
       <div className="modal" style={{ maxWidth: "580px" }}>
-        <div className="modal-header">
-          <h3>Registrasi Dokumen Baru</h3>
-          <button className="modal-close" onClick={onClose} aria-label="Tutup modal">
-            <X size={16} />
-          </button>
+        <div className="modal-header" style={{ flexDirection: "column", alignItems: "flex-start", gap: "2px" }}>
+          <div style={{ display: "flex", justifyContent: "space-between", width: "100%", alignItems: "center" }}>
+            <h3>Registrasi Dokumen Baru</h3>
+            <button className="modal-close" onClick={onClose} aria-label="Tutup modal">
+              <X size={16} />
+            </button>
+          </div>
+          <span style={{ fontSize: "11px", color: "var(--text-tertiary)", fontWeight: 500 }}>
+            Tanda (*) menunjukkan kolom yang wajib diisi
+          </span>
         </div>
 
         {error && (

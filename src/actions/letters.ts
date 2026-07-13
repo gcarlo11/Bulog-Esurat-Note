@@ -91,7 +91,7 @@ async function generateLetterNumber(
   });
 
   if (samePrefixLetters.length === 0) {
-    return `${prefix}-1`;
+    return `${prefix}-001`;
   }
 
   // Parse nomor surat
@@ -116,7 +116,7 @@ async function generateLetterNumber(
     }[];
 
   if (parsedLetters.length === 0) {
-    return `${prefix}-1`;
+    return `${prefix}-001`;
   }
 
   // Cek backdate
@@ -127,7 +127,7 @@ async function generateLetterNumber(
   if (!isBackdated) {
     const maxBase = Math.max(...parsedLetters.map((l) => l.baseNumber));
     const nextBase = maxBase > 0 ? maxBase + 1 : 1;
-    return `${prefix}-${nextBase}`;
+    return `${prefix}-${String(nextBase).padStart(3, "0")}`;
   } else {
     const beforeOrEqualLetters = parsedLetters
       .filter((l) => l.letterDate.getTime() <= targetTime)
@@ -156,7 +156,7 @@ async function generateLetterNumber(
     const nextSuffixIndex = maxSuffixIndex + 1;
     const nextSuffix = getSuffix(nextSuffixIndex);
 
-    return `${prefix}-${baseNumberToUse}${nextSuffix}`;
+    return `${prefix}-${String(baseNumberToUse).padStart(3, "0")}${nextSuffix}`;
   }
 }
 
@@ -418,6 +418,33 @@ export async function archiveLetterAction(
   return { success: "Surat berhasil diarsipkan." };
 }
 
+// ============================================
+// Helper: Membangun Filter Tanggal
+// ============================================
+function buildDateFilter(date?: string, month?: number | string, year?: number | string) {
+  if (date) {
+    const startDate = new Date(date + "T00:00:00");
+    const endDate = new Date(date + "T23:59:59");
+    return { gte: startDate, lte: endDate };
+  }
+  
+  if (month || year) {
+    const currentYear = new Date().getFullYear();
+    const parsedYear = year ? parseInt(String(year), 10) : currentYear;
+    if (month) {
+      const parsedMonth = parseInt(String(month), 10);
+      const startDate = new Date(parsedYear, parsedMonth - 1, 1, 0, 0, 0);
+      const endDate = new Date(parsedYear, parsedMonth, 0, 23, 59, 59);
+      return { gte: startDate, lte: endDate };
+    } else {
+      const startDate = new Date(parsedYear, 0, 1, 0, 0, 0);
+      const endDate = new Date(parsedYear, 12, 0, 23, 59, 59);
+      return { gte: startDate, lte: endDate };
+    }
+  }
+  return undefined;
+}
+
 export async function getLetters(params?: {
   category?: string;
   type?: string;
@@ -425,6 +452,9 @@ export async function getLetters(params?: {
   search?: string;
   page?: number;
   limit?: number;
+  date?: string;
+  month?: number;
+  year?: number;
 }) {
   await getAuthenticatedUser();
 
@@ -432,7 +462,7 @@ export async function getLetters(params?: {
   const limit = params?.limit || 15;
   const skip = (page - 1) * limit;
 
-  const where: Record<string, unknown> = {};
+  const where: Record<string, any> = {};
 
   if (params?.category && params.category !== "ALL") {
     where.category = params.category;
@@ -445,6 +475,12 @@ export async function getLetters(params?: {
   } else {
     where.status = "ACTIVE"; // Default: tampilkan hanya surat aktif
   }
+
+  const dateFilter = buildDateFilter(params?.date, params?.month, params?.year);
+  if (dateFilter) {
+    where.letterDate = dateFilter;
+  }
+
   if (params?.search) {
     where.OR = [
       { subject: { contains: params.search } },
@@ -514,11 +550,21 @@ export async function getLetterDetail(letterId: string) {
 // ============================================
 // Dashboard Statistics
 // ============================================
-export async function getDashboardStats() {
+export async function getDashboardStats(params?: {
+  date?: string;
+  month?: number;
+  year?: number;
+}) {
   await getAuthenticatedUser();
 
   const now = new Date();
   const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
+
+  const baseWhere: Record<string, any> = { status: "ACTIVE" };
+  const dateFilter = buildDateFilter(params?.date, params?.month, params?.year);
+  if (dateFilter) {
+    baseWhere.letterDate = dateFilter;
+  }
 
   const [
     totalLetters,
@@ -528,12 +574,12 @@ export async function getDashboardStats() {
     recentLogs,
     recentLetters,
   ] = await Promise.all([
-    prisma.letter.count({ where: { status: "ACTIVE" } }),
+    prisma.letter.count({ where: baseWhere }),
     prisma.letter.count({
-      where: { type: "MASUK", status: "ACTIVE" },
+      where: { ...baseWhere, type: "MASUK" },
     }),
     prisma.letter.count({
-      where: { type: "KELUAR", status: "ACTIVE" },
+      where: { ...baseWhere, type: "KELUAR" },
     }),
     prisma.letter.count({
       where: {
@@ -574,6 +620,9 @@ export async function getDashboardStats() {
 export async function getAuditLogs(params?: {
   page?: number;
   limit?: number;
+  date?: string;
+  month?: number;
+  year?: number;
 }) {
   await requireRole(["ADMIN"]);
 
@@ -581,8 +630,15 @@ export async function getAuditLogs(params?: {
   const limit = params?.limit || 20;
   const skip = (page - 1) * limit;
 
+  const where: Record<string, any> = {};
+  const dateFilter = buildDateFilter(params?.date, params?.month, params?.year);
+  if (dateFilter) {
+    where.createdAt = dateFilter;
+  }
+
   const [logs, total] = await Promise.all([
     prisma.auditLog.findMany({
+      where,
       orderBy: { createdAt: "desc" },
       include: {
         user: { select: { name: true, email: true } },
@@ -591,7 +647,7 @@ export async function getAuditLogs(params?: {
       skip,
       take: limit,
     }),
-    prisma.auditLog.count(),
+    prisma.auditLog.count({ where }),
   ]);
 
   return {
@@ -608,10 +664,13 @@ export async function getAuditLogs(params?: {
 export async function getLettersForExport(params?: {
   category?: string;
   type?: string;
+  date?: string;
+  month?: number;
+  year?: number;
 }) {
   await getAuthenticatedUser();
 
-  const where: Record<string, unknown> = {
+  const where: Record<string, any> = {
     status: "ACTIVE",
   };
 
@@ -620,6 +679,11 @@ export async function getLettersForExport(params?: {
   }
   if (params?.type && params.type !== "ALL") {
     where.type = params.type;
+  }
+
+  const dateFilter = buildDateFilter(params?.date, params?.month, params?.year);
+  if (dateFilter) {
+    where.letterDate = dateFilter;
   }
 
   const letters = await prisma.letter.findMany({
