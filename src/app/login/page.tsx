@@ -20,6 +20,7 @@ import {
   ShieldCheck,
   FileText,
   Building2,
+  Inbox,
 } from "lucide-react";
 
 // Akun demo untuk quick-fill dengan desain ter-themed
@@ -110,20 +111,20 @@ export default function LoginPage() {
       <div className="w-full max-w-md relative z-10">
         {/* Logo & Branding */}
         <div className="text-center mb-6">
-          <div className="inline-flex items-center justify-center w-14 h-14 rounded-2xl bg-indigo-600 shadow-lg shadow-indigo-600/30 mb-3 ring-4 ring-indigo-500/10">
-            <FileText className="text-white" size={24} strokeWidth={2.2} />
-          </div>
-          <h1 className="text-2xl font-bold text-zinc-950 dark:text-white tracking-tight">BULOG E-Surat</h1>
+          {/* <div className="inline-flex items-center justify-center w-14 h-14 rounded-2xl bg-zinc-950 text-white dark:bg-white dark:text-zinc-950 shadow-lg shadow-black/10 dark:shadow-white/5 mb-3 ring-4 ring-zinc-500/5 transition-colors duration-300">
+            <Inbox size={26} strokeWidth={2} />
+          </div> */}
+          <h1 className="text-4xl font-black text-zinc-950 dark:text-white tracking-tight">SISTEM E-SURAT</h1>
           <p className="text-zinc-600 dark:text-zinc-400 text-xs mt-1.5 flex items-center justify-center gap-1.5 font-medium">
             <Building2 size={12} />
-            KANTOR WILAYAH SUMATERA SELATAN &amp; BANGKA BELITUNG
+            PERUM BULOG KANTOR WILAYAH SUMSEL &amp; BABEL
           </p>
         </div>
 
         {/* Card with sleek glassmorphism styling */}
         <Card className="border-zinc-200 dark:border-zinc-800 bg-white/70 dark:bg-zinc-950/65 backdrop-blur-xl shadow-xl shadow-black/5 dark:shadow-black/40 text-zinc-900 dark:text-white transition-all duration-300">
-          <CardHeader className="pb-4">
-            <CardTitle className="text-zinc-950 dark:text-white text-lg font-bold center">Masuk ke Sistem</CardTitle>
+          <CardHeader className="pb-4 text-center">
+            <CardTitle className="text-zinc-950 dark:text-white text-lg font-bold">Masuk ke Sistem</CardTitle>
             <CardDescription className="text-zinc-500 dark:text-zinc-400 text-xs">
               Gunakan kredensial akun Anda untuk melanjutkan
             </CardDescription>
@@ -196,7 +197,7 @@ export default function LoginPage() {
 
               <Button
                 type="submit"
-                className="w-full h-10 bg-indigo-600 hover:bg-indigo-500 dark:bg-indigo-600 dark:hover:bg-indigo-500 text-white font-semibold shadow-md shadow-indigo-600/10 dark:shadow-indigo-600/30 transition-all duration-200 text-sm"
+                className="w-full h-10 bg-zinc-950 hover:bg-zinc-900 text-white dark:bg-white dark:text-zinc-950 dark:hover:bg-zinc-200 font-semibold shadow-md transition-all duration-200 text-sm border-none"
                 disabled={loading}
               >
                 {loading ? (

@@ -87,8 +87,13 @@ export default function AuditLogsPage() {
       </div>
 
       <div className="table-wrapper" style={{ border: "1px solid var(--border-default)" }}>
-        <div className="table-header">
-          <h3>Total {total} aktivitas tercatat</h3>
+        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "12px 16px", borderBottom: "1px solid var(--border-default)", gap: "12px" }}>
+          <div style={{ fontSize: "13px", fontWeight: 600, color: "var(--text-primary)" }}>
+            Log Aktivitas Keamanan
+          </div>
+          <div style={{ fontSize: "12px", color: "var(--text-tertiary)" }}>
+            {total} aktivitas tercatat
+          </div>
         </div>
 
         {loading ? (

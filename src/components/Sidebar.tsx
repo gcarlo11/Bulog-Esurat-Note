@@ -82,7 +82,7 @@ export function Sidebar({ user }: SidebarProps) {
         <div className="sidebar-brand-icon">
           <Inbox size={16} strokeWidth={2.5} />
         </div>
-        <h1>BULOG E-Surat</h1>
+        <h1>Sistem E-Surat</h1>
       </div>
 
       {/* Navigation */}
