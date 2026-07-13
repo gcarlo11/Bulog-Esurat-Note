@@ -1,12 +1,14 @@
 "use client";
 
-import { useState, useRef } from "react";
+import { useState, useRef, useEffect } from "react";
 import { loginAction, seedAdminAction } from "@/actions/auth";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { InteractiveParticles } from "@/components/ui/interactive-particles";
+import { StarfieldBackground } from "@/components/ui/starfield";
+import { ThemeSwitcher } from "@/components/ThemeSwitcher";
+import { useTheme } from "next-themes";
 import {
   Eye,
   EyeOff,
@@ -20,11 +22,11 @@ import {
   Building2,
 } from "lucide-react";
 
-// Akun demo untuk quick-fill
+// Akun demo untuk quick-fill dengan desain ter-themed
 const DEMO_ACCOUNTS = [
-  { role: "Admin", email: "admin@esurat.local", password: "admin123", color: "bg-indigo-600/10 text-indigo-400 border-indigo-500/20 hover:bg-indigo-600/20" },
-  { role: "Staff", email: "staff@esurat.local", password: "staff123", color: "bg-sky-600/10 text-sky-400 border-sky-500/20 hover:bg-sky-600/20" },
-  { role: "Viewer", email: "viewer@esurat.local", password: "viewer123", color: "bg-emerald-600/10 text-emerald-400 border-emerald-500/20 hover:bg-emerald-600/20" },
+  { role: "Admin", email: "admin@esurat.local", password: "admin123", color: "bg-indigo-600/10 text-indigo-600 dark:text-indigo-400 border-indigo-500/20 hover:bg-indigo-600/20" },
+  { role: "Staff", email: "staff@esurat.local", password: "staff123", color: "bg-sky-600/10 text-sky-600 dark:text-sky-400 border-sky-500/20 hover:bg-sky-600/20" },
+  { role: "Viewer", email: "viewer@esurat.local", password: "viewer123", color: "bg-emerald-600/10 text-emerald-600 dark:text-emerald-400 border-emerald-500/20 hover:bg-emerald-600/20" },
 ];
 
 export default function LoginPage() {
@@ -35,8 +37,14 @@ export default function LoginPage() {
   const [showPassword, setShowPassword] = useState(false);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [mounted, setMounted] = useState(false);
 
   const emailRef = useRef<HTMLInputElement>(null);
+  const { resolvedTheme } = useTheme();
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
 
   async function handleLogin(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
@@ -83,58 +91,65 @@ export default function LoginPage() {
     emailRef.current?.focus();
   }
 
+  const isDark = !mounted || resolvedTheme === "dark";
+
   return (
-    <div className="min-h-screen bg-slate-950 flex items-center justify-center p-4 relative overflow-hidden">
-      {/* Interactive Particles Background */}
-      <InteractiveParticles className="absolute inset-0 z-0" quantity={100} />
+    <div className="min-h-screen flex items-center justify-center p-4 relative overflow-hidden transition-colors duration-500">
+      {/* Starfield Background */}
+      <StarfieldBackground className="absolute inset-0 z-0" count={450} speed={0.4} />
+
+      {/* Floating Theme Switcher */}
+      <div className="absolute top-4 right-4 z-50">
+        <ThemeSwitcher />
+      </div>
 
       {/* Decorative glows */}
-      <div className="absolute top-0 left-0 w-[600px] h-[600px] bg-indigo-500/10 rounded-full blur-[120px] -translate-x-1/2 -translate-y-1/2 pointer-events-none" />
-      <div className="absolute bottom-0 right-0 w-[500px] h-[500px] bg-purple-500/10 rounded-full blur-[120px] translate-x-1/3 translate-y-1/3 pointer-events-none" />
+      <div className="absolute top-0 left-0 w-[600px] h-[600px] bg-indigo-500/5 rounded-full blur-[120px] -translate-x-1/2 -translate-y-1/2 pointer-events-none" />
+      <div className="absolute bottom-0 right-0 w-[500px] h-[500px] bg-purple-500/5 rounded-full blur-[120px] translate-x-1/3 translate-y-1/3 pointer-events-none" />
 
       <div className="w-full max-w-md relative z-10">
         {/* Logo & Branding */}
-        <div className="text-center mb-8">
-          <div className="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-indigo-600 shadow-lg shadow-indigo-600/40 mb-4 ring-4 ring-indigo-500/20">
-            <FileText className="text-white" size={28} strokeWidth={2} />
+        <div className="text-center mb-6">
+          <div className="inline-flex items-center justify-center w-14 h-14 rounded-2xl bg-indigo-600 shadow-lg shadow-indigo-600/30 mb-3 ring-4 ring-indigo-500/10">
+            <FileText className="text-white" size={24} strokeWidth={2.2} />
           </div>
-          <h1 className="text-3xl font-bold text-white tracking-tight">E-Surat</h1>
-          <p className="text-slate-400 text-sm mt-1 flex items-center justify-center gap-1.5">
-            <Building2 size={13} />
-            PERUM BULOG — Kanwil Sumsel &amp; Babel
+          <h1 className="text-2xl font-bold text-zinc-950 dark:text-white tracking-tight">BULOG E-Surat</h1>
+          <p className="text-zinc-600 dark:text-zinc-400 text-xs mt-1.5 flex items-center justify-center gap-1.5 font-medium">
+            <Building2 size={12} />
+            KANTOR WILAYAH SUMATERA SELATAN &amp; BANGKA BELITUNG
           </p>
         </div>
 
         {/* Card with sleek glassmorphism styling */}
-        <Card className="border-slate-800 bg-slate-900/60 backdrop-blur-xl shadow-2xl shadow-black/40 text-white">
+        <Card className="border-zinc-200 dark:border-zinc-800 bg-white/70 dark:bg-zinc-950/65 backdrop-blur-xl shadow-xl shadow-black/5 dark:shadow-black/40 text-zinc-900 dark:text-white transition-all duration-300">
           <CardHeader className="pb-4">
-            <CardTitle className="text-white text-xl">Masuk ke Sistem</CardTitle>
-            <CardDescription className="text-slate-400">
+            <CardTitle className="text-zinc-950 dark:text-white text-lg font-bold center">Masuk ke Sistem</CardTitle>
+            <CardDescription className="text-zinc-500 dark:text-zinc-400 text-xs">
               Gunakan kredensial akun Anda untuk melanjutkan
             </CardDescription>
           </CardHeader>
 
-          <CardContent className="space-y-5">
+          <CardContent className="space-y-4">
             {/* Alert Error */}
             {error && (
-              <div className="flex items-start gap-3 rounded-lg border border-red-500/30 bg-red-500/10 px-4 py-3 text-sm text-red-300">
-                <AlertCircle size={16} className="mt-0.5 shrink-0" />
+              <div className="flex items-start gap-2.5 rounded-lg border border-red-500/20 bg-red-500/10 px-3.5 py-2.5 text-xs text-red-600 dark:text-red-300">
+                <AlertCircle size={14} className="mt-0.5 shrink-0" />
                 <span>{error}</span>
               </div>
             )}
 
             {/* Alert Success */}
             {success && (
-              <div className="flex items-start gap-3 rounded-lg border border-emerald-500/30 bg-emerald-500/10 px-4 py-3 text-sm text-emerald-300">
-                <CheckCircle2 size={16} className="mt-0.5 shrink-0" />
+              <div className="flex items-start gap-2.5 rounded-lg border border-emerald-500/20 bg-emerald-500/10 px-3.5 py-2.5 text-xs text-emerald-600 dark:text-emerald-300">
+                <CheckCircle2 size={14} className="mt-0.5 shrink-0" />
                 <span>{success}</span>
               </div>
             )}
 
             {/* Form */}
-            <form onSubmit={handleLogin} className="space-y-4">
-              <div className="space-y-2">
-                <Label htmlFor="email" className="text-slate-300">
+            <form onSubmit={handleLogin} className="space-y-3.5">
+              <div className="space-y-1.5">
+                <Label htmlFor="email" className="text-zinc-700 dark:text-zinc-300 text-xs font-semibold">
                   Alamat Email
                 </Label>
                 <Input
@@ -147,12 +162,12 @@ export default function LoginPage() {
                   autoComplete="email"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
-                  className="bg-slate-950/40 border-slate-800 text-white placeholder:text-slate-600 focus-visible:ring-indigo-500/30 h-11"
+                  className="bg-white/40 dark:bg-zinc-950/40 border-zinc-200 dark:border-zinc-800 text-zinc-900 dark:text-white placeholder:text-zinc-400 dark:placeholder:text-zinc-600 focus-visible:ring-indigo-500/20 h-10 text-sm"
                 />
               </div>
 
-              <div className="space-y-2">
-                <Label htmlFor="password" className="text-slate-300">
+              <div className="space-y-1.5">
+                <Label htmlFor="password" className="text-zinc-700 dark:text-zinc-300 text-xs font-semibold">
                   Password
                 </Label>
                 <div className="relative">
@@ -165,33 +180,33 @@ export default function LoginPage() {
                     autoComplete="current-password"
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
-                    className="bg-slate-950/40 border-slate-800 text-white placeholder:text-slate-600 focus-visible:ring-indigo-500/30 h-11 pr-11"
+                    className="bg-white/40 dark:bg-zinc-950/40 border-zinc-200 dark:border-zinc-800 text-zinc-900 dark:text-white placeholder:text-zinc-400 dark:placeholder:text-zinc-600 focus-visible:ring-indigo-500/20 h-10 pr-10 text-sm"
                   />
                   <button
                     type="button"
                     onClick={() => setShowPassword(!showPassword)}
-                    className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-200 transition-colors"
+                    className="absolute right-3 top-1/2 -translate-y-1/2 text-zinc-400 hover:text-zinc-600 dark:hover:text-zinc-200 transition-colors"
                     tabIndex={-1}
                     aria-label={showPassword ? "Sembunyikan password" : "Tampilkan password"}
                   >
-                    {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
+                    {showPassword ? <EyeOff size={15} /> : <Eye size={15} />}
                   </button>
                 </div>
               </div>
 
               <Button
                 type="submit"
-                className="w-full h-11 bg-indigo-600 hover:bg-indigo-500 text-white font-semibold shadow-lg shadow-indigo-600/30 transition-all duration-200"
+                className="w-full h-10 bg-indigo-600 hover:bg-indigo-500 dark:bg-indigo-600 dark:hover:bg-indigo-500 text-white font-semibold shadow-md shadow-indigo-600/10 dark:shadow-indigo-600/30 transition-all duration-200 text-sm"
                 disabled={loading}
               >
                 {loading ? (
                   <>
-                    <Loader2 size={16} className="animate-spin" />
+                    <Loader2 size={14} className="animate-spin" />
                     Memproses...
                   </>
                 ) : (
                   <>
-                    <LogIn size={16} />
+                    <LogIn size={14} />
                     Masuk ke Sistem
                   </>
                 )}
@@ -199,12 +214,12 @@ export default function LoginPage() {
             </form>
 
             {/* Divider */}
-            <div className="relative">
+            <div className="relative py-1">
               <div className="absolute inset-0 flex items-center">
-                <span className="w-full border-t border-slate-800" />
+                <span className="w-full border-t border-zinc-200 dark:border-zinc-800" />
               </div>
-              <div className="relative flex justify-center text-xs uppercase">
-                <span className="bg-slate-900/60 px-2 text-slate-500">Akun Demo</span>
+              <div className="relative flex justify-center text-[10px] uppercase font-bold tracking-wider">
+                <span className="bg-white px-2 text-zinc-500 dark:bg-[#0c0c11] dark:text-zinc-400 transition-colors duration-500">Akun Demo</span>
               </div>
             </div>
 
@@ -215,7 +230,7 @@ export default function LoginPage() {
                   key={acc.role}
                   type="button"
                   onClick={() => fillDemo(acc)}
-                  className={`text-xs font-semibold px-2 py-2 rounded-lg border transition-all duration-150 ${acc.color}`}
+                  className={`text-xs font-semibold px-2 py-1.5 rounded-lg border transition-all duration-150 ${acc.color}`}
                 >
                   {acc.role}
                 </button>
@@ -229,31 +244,31 @@ export default function LoginPage() {
               size="sm"
               onClick={handleSeed}
               disabled={seeding}
-              className="w-full border-slate-800 bg-slate-950/20 text-slate-300 hover:bg-slate-800 hover:text-white"
+              className="w-full border-zinc-200 dark:border-zinc-800 bg-white/20 dark:bg-zinc-950/20 text-zinc-700 dark:text-zinc-300 hover:bg-zinc-100 dark:hover:bg-zinc-800 hover:text-zinc-950 dark:hover:text-white text-xs h-9"
             >
               {seeding ? (
                 <>
-                  <Loader2 size={13} className="animate-spin" />
+                  <Loader2 size={12} className="animate-spin" />
                   Membuat akun...
                 </>
               ) : (
                 <>
-                  <RefreshCw size={13} />
+                  <RefreshCw size={12} />
                   Inisialisasi Akun Demo
                 </>
               )}
             </Button>
 
-            {/* Security Badge */}
-            <div className="flex items-center justify-center gap-1.5 text-xs text-slate-500 pt-1">
-              <ShieldCheck size={12} />
-              <span>Dilindungi JWT &amp; bcrypt — Sesi 24 jam</span>
+            {/* Security/Log Information */}
+            <div className="flex items-center justify-center gap-1 text-[10px] text-zinc-500 dark:text-zinc-500 font-medium">
+              <ShieldCheck size={11} />
+              <span>Dilindungi kriptografi JWT HS256 &amp; hash bcrypt</span>
             </div>
           </CardContent>
         </Card>
 
-        <p className="text-center text-xs text-slate-600 mt-6">
-          © 2024 Perum BULOG Kanwil Sumsel &amp; Babel. Sistem E-Surat v1.0
+        <p className="text-center text-[10px] text-zinc-400 dark:text-zinc-600 mt-5 font-medium transition-colors duration-500">
+          © 2026 Perum BULOG Kanwil Sumsel &amp; Babel. Sistem E-Surat v1.2
         </p>
       </div>
     </div>
