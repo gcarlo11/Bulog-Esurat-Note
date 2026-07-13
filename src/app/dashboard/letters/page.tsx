@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useCallback } from "react";
 import Link from "next/link";
-import { useSearchParams } from "next/navigation";
+import { useSearchParams, useRouter } from "next/navigation";
 import { getLetters, getLettersForExport } from "@/actions/letters";
 import { CreateLetterModal } from "@/components/CreateLetterModal";
 import { useUser, canEdit } from "@/components/UserProvider";
@@ -66,11 +66,13 @@ const CATEGORIES = [
 
 export default function LettersPage() {
   const user = useUser();
+  const router = useRouter();
   const searchParams = useSearchParams();
+  const categoryFilter = searchParams.get("category") || "ALL";
   const typeFilter = searchParams.get("type") || "ALL";
   const openCreate = searchParams.get("create") === "true";
 
-  const [categoryTab, setCategoryTab] = useState<string>("ALL");
+  const [categoryTab, setCategoryTab] = useState<string>(categoryFilter);
   const [letters, setLetters] = useState<Letter[]>([]);
   const [total, setTotal] = useState(0);
   const [page, setPage] = useState(1);
@@ -80,6 +82,12 @@ export default function LettersPage() {
   const [showModal, setShowModal] = useState(false);
   const [loading, setLoading] = useState(true);
   const [exporting, setExporting] = useState(false);
+
+  // Sync categoryTab state when URL query parameter changes
+  useEffect(() => {
+    setCategoryTab(searchParams.get("category") || "ALL");
+    setPage(1);
+  }, [searchParams]);
 
   const filterLabel =
     categoryTab === "ALL"
@@ -192,8 +200,14 @@ export default function LettersPage() {
             key={cat.key}
             className={`tab ${categoryTab === cat.key ? "active" : ""}`}
             onClick={() => {
-              setCategoryTab(cat.key);
-              setPage(1);
+              const params = new URLSearchParams(searchParams.toString());
+              if (cat.key === "ALL") {
+                params.delete("category");
+              } else {
+                params.set("category", cat.key);
+              }
+              params.set("page", "1");
+              router.push(`/dashboard/letters?${params.toString()}`);
             }}
           >
             <Layers size={14} />

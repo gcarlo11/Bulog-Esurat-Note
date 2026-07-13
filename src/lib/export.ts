@@ -7,8 +7,8 @@ import autoTable from "jspdf-autotable";
 // ============================================
 const COMPANY_NAME = "PERUM BULOG";
 const COMPANY_DIVISION = "KANTOR WILAYAH SUMATERA SELATAN & BANGKA BELITUNG";
-const COMPANY_ADDRESS = "Jl. Kapten A. Rivai No. 35, Palembang 30129";
-const COMPANY_PHONE = "Telp: (0711) 350-xxx | Fax: (0711) 350-xxx";
+const COMPANY_ADDRESS = "Jl. Perintis Kemerdekaan No.1, Duku, Ilir Tim. II, Kota Palembang, Sumatera Selatan 30114, Indonesia";
+const COMPANY_PHONE = "Telp: (0711) 712-246 | Web: bulog.co.id";
 
 interface LetterExportData {
   id: string;
