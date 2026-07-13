@@ -45,8 +45,9 @@ export default function AuditLogsPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
 
-  // Filter Tanggal / Bulan / Tahun
-  const [filterDate, setFilterDate] = useState("");
+  // Filter Tanggal Mulai / Akhir / Bulan / Tahun
+  const [filterStartDate, setFilterStartDate] = useState("");
+  const [filterEndDate, setFilterEndDate] = useState("");
   const [filterMonth, setFilterMonth] = useState("");
   const [filterYear, setFilterYear] = useState("");
 
@@ -56,7 +57,8 @@ export default function AuditLogsPage() {
     try {
       const result = await getAuditLogs({
         page,
-        date: filterDate || undefined,
+        startDate: filterStartDate || undefined,
+        endDate: filterEndDate || undefined,
         month: filterMonth ? parseInt(filterMonth, 10) : undefined,
         year: filterYear ? parseInt(filterYear, 10) : undefined,
       });
@@ -68,7 +70,7 @@ export default function AuditLogsPage() {
     } finally {
       setLoading(false);
     }
-  }, [page, filterDate, filterMonth, filterYear]);
+  }, [page, filterStartDate, filterEndDate, filterMonth, filterYear]);
 
   useEffect(() => {
     fetchLogs();
@@ -104,25 +106,46 @@ export default function AuditLogsPage() {
             </div>
             
             {/* Date Filters */}
-            <div style={{ display: "flex", gap: "6px", alignItems: "center" }}>
-              <input
-                type="date"
-                className="filter-select"
-                value={filterDate}
-                onChange={(e) => {
-                  setFilterDate(e.target.value);
-                  setFilterMonth("");
-                  setFilterYear("");
-                  setPage(1);
-                }}
-                title="Filter Tanggal Spesifik"
-              />
+            <div style={{ display: "flex", gap: "6px", alignItems: "center", flexWrap: "wrap" }}>
+              <div style={{ display: "flex", alignItems: "center", gap: "4px" }}>
+                <span style={{ fontSize: "11px", color: "var(--text-secondary)" }}>Dari:</span>
+                <input
+                  type="date"
+                  className="filter-select"
+                  value={filterStartDate}
+                  onChange={(e) => {
+                    setFilterStartDate(e.target.value);
+                    setFilterMonth("");
+                    setFilterYear("");
+                    setPage(1);
+                  }}
+                  title="Filter Tanggal Mulai"
+                />
+              </div>
+
+              <div style={{ display: "flex", alignItems: "center", gap: "4px" }}>
+                <span style={{ fontSize: "11px", color: "var(--text-secondary)" }}>Sampai:</span>
+                <input
+                  type="date"
+                  className="filter-select"
+                  value={filterEndDate}
+                  onChange={(e) => {
+                    setFilterEndDate(e.target.value);
+                    setFilterMonth("");
+                    setFilterYear("");
+                    setPage(1);
+                  }}
+                  title="Filter Tanggal Akhir"
+                />
+              </div>
+
               <select
                 className="filter-select"
                 value={filterMonth}
                 onChange={(e) => {
                   setFilterMonth(e.target.value);
-                  setFilterDate("");
+                  setFilterStartDate("");
+                  setFilterEndDate("");
                   setPage(1);
                 }}
                 title="Filter Bulan"
@@ -149,19 +172,21 @@ export default function AuditLogsPage() {
                 value={filterYear}
                 onChange={(e) => {
                   setFilterYear(e.target.value);
-                  setFilterDate("");
+                  setFilterStartDate("");
+                  setFilterEndDate("");
                   setPage(1);
                 }}
                 min="2000"
                 max="2100"
                 title="Filter Tahun"
               />
-              {(filterDate || filterMonth || filterYear) && (
+              {(filterStartDate || filterEndDate || filterMonth || filterYear) && (
                 <button
                   type="button"
                   className="btn btn-secondary btn-sm"
                   onClick={() => {
-                    setFilterDate("");
+                    setFilterStartDate("");
+                    setFilterEndDate("");
                     setFilterMonth("");
                     setFilterYear("");
                     setPage(1);

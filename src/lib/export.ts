@@ -49,13 +49,11 @@ function formatRupiah(value: number) {
 // ============================================
 // Export ke Excel (.xlsx)
 // ============================================
-export function exportToExcel(letters: LetterExportData[], filterLabel: string) {
+// ============================================
+// Export ke Excel (.xlsx)
+// ============================================
+export function exportToExcel(letters: LetterExportData[], filterLabel: string, periodLabel: string) {
   const now = new Date();
-  const dateStr = now.toLocaleDateString("id-ID", {
-    day: "2-digit",
-    month: "long",
-    year: "numeric",
-  });
 
   // Determine column headers and row mapping based on category
   let columnHeaders: string[] = [];
@@ -178,7 +176,7 @@ export function exportToExcel(letters: LetterExportData[], filterLabel: string) 
     [COMPANY_PHONE],
     [""],
     [`REKAPITULASI ${filterLabel.toUpperCase()}`],
-    [`Per Tanggal: ${dateStr}`],
+    [periodLabel],
     [""],
   ];
 
@@ -211,7 +209,7 @@ export function exportToExcel(letters: LetterExportData[], filterLabel: string) 
 // ============================================
 // Export ke PDF
 // ============================================
-export function exportToPdf(letters: LetterExportData[], filterLabel: string) {
+export function exportToPdf(letters: LetterExportData[], filterLabel: string, periodLabel: string) {
   const now = new Date();
   const dateStr = now.toLocaleDateString("id-ID", {
     day: "2-digit",
@@ -222,16 +220,16 @@ export function exportToPdf(letters: LetterExportData[], filterLabel: string) {
   const doc = new jsPDF({ orientation: "landscape", unit: "mm", format: "a4" });
   const pageWidth = doc.internal.pageSize.getWidth();
 
-  // Kop Surat
+  // Kop Surat - Times New Roman
   doc.setFontSize(16);
-  doc.setFont("helvetica", "bold");
+  doc.setFont("times", "bold");
   doc.text(COMPANY_NAME, pageWidth / 2, 18, { align: "center" });
 
   doc.setFontSize(11);
   doc.text(COMPANY_DIVISION, pageWidth / 2, 25, { align: "center" });
 
   doc.setFontSize(9);
-  doc.setFont("helvetica", "normal");
+  doc.setFont("times", "normal");
   doc.text(COMPANY_ADDRESS, pageWidth / 2, 31, { align: "center" });
 
   doc.setFontSize(8);
@@ -243,12 +241,12 @@ export function exportToPdf(letters: LetterExportData[], filterLabel: string) {
   doc.line(14, 40, pageWidth - 14, 40);
 
   doc.setFontSize(12);
-  doc.setFont("helvetica", "bold");
+  doc.setFont("times", "bold");
   doc.text(`REKAPITULASI ${filterLabel.toUpperCase()}`, pageWidth / 2, 48, { align: "center" });
 
   doc.setFontSize(9);
-  doc.setFont("helvetica", "normal");
-  doc.text(`Per Tanggal: ${dateStr}`, pageWidth / 2, 54, { align: "center" });
+  doc.setFont("times", "normal");
+  doc.text(periodLabel, pageWidth / 2, 54, { align: "center" });
 
   // Map fields dynamically based on category
   const firstCategory = letters.length > 0 ? letters[0].category : "ALL";
@@ -258,6 +256,7 @@ export function exportToPdf(letters: LetterExportData[], filterLabel: string) {
   let headers: string[] = [];
   let bodyData: string[][] = [];
   let columnStyles: any = {};
+  let totalTableWidth = 240;
 
   if (activeCategory === "AGENDA") {
     headers = ["No", "Nomor Agenda", "Jenis Agenda", "Perihal", "Tujuan", "Tanggal", "Kode", "Status"];
@@ -281,6 +280,7 @@ export function exportToPdf(letters: LetterExportData[], filterLabel: string) {
       6: { halign: "center", cellWidth: 20 },
       7: { halign: "center", cellWidth: 18 },
     };
+    totalTableWidth = 240; // Total: 10+32+35+60+40+25+20+18 = 240
   } else if (activeCategory === "KELUAR_MASUK") {
     headers = ["No", "Nomor Surat", "Tipe", "Perihal", "Pengirim", "Penerima", "Tanggal", "No. Berkas", "No. Petunjuk"];
     bodyData = letters.map((l, i) => [
@@ -305,6 +305,7 @@ export function exportToPdf(letters: LetterExportData[], filterLabel: string) {
       7: { cellWidth: 20 },
       8: { cellWidth: 20 },
     };
+    totalTableWidth = 245; // Total: 10+30+16+55+35+35+24+20+20 = 245
   } else if (activeCategory === "NOTA_VERIFIKASI") {
     headers = ["No", "Nomor Nota", "Perihal", "Tanggal", "Nominal", "Paraf", "Status"];
     bodyData = letters.map((l, i) => [
@@ -325,6 +326,7 @@ export function exportToPdf(letters: LetterExportData[], filterLabel: string) {
       5: { halign: "center", cellWidth: 35 },
       6: { halign: "center", cellWidth: 20 },
     };
+    totalTableWidth = 252; // Total: 12+40+80+30+35+35+20 = 252
   } else {
     headers = ["No", "Nomor Dokumen", "Kategori", "Perihal", "Penerima/Tujuan", "Tanggal", "Detail Info", "Status"];
     bodyData = letters.map((l, i) => {
@@ -354,7 +356,11 @@ export function exportToPdf(letters: LetterExportData[], filterLabel: string) {
       6: { cellWidth: 35 },
       7: { halign: "center", cellWidth: 18 },
     };
+    totalTableWidth = 240; // Total: 10+30+28+55+40+24+35+18 = 240
   }
+
+  // Centering Table Horizontally
+  const leftMargin = (pageWidth - totalTableWidth) / 2;
 
   autoTable(doc, {
     startY: 58,
@@ -362,18 +368,21 @@ export function exportToPdf(letters: LetterExportData[], filterLabel: string) {
     body: bodyData,
     theme: "grid",
     styles: {
+      font: "times",
       fontSize: 8,
       cellPadding: 3,
       lineColor: [100, 100, 100],
       lineWidth: 0.2,
     },
     headStyles: {
+      font: "times",
       fillColor: [40, 40, 40],
       textColor: [255, 255, 255],
       fontStyle: "bold",
       halign: "center",
       fontSize: 8,
     },
+    margin: { left: leftMargin, right: leftMargin },
     columnStyles,
     alternateRowStyles: {
       fillColor: [248, 248, 248],
@@ -381,7 +390,7 @@ export function exportToPdf(letters: LetterExportData[], filterLabel: string) {
     didDrawPage: (data) => {
       const pageCount = doc.getNumberOfPages();
       doc.setFontSize(7);
-      doc.setFont("helvetica", "normal");
+      doc.setFont("times", "normal");
       doc.text(
         `Dicetak pada: ${dateStr} — Halaman ${data.pageNumber} dari ${pageCount}`,
         pageWidth / 2,

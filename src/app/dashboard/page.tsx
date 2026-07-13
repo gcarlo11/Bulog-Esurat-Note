@@ -36,7 +36,8 @@ export default async function DashboardPage({
   searchParams,
 }: {
   searchParams: Promise<{
-    date?: string;
+    startDate?: string;
+    endDate?: string;
     month?: string;
     year?: string;
   }>;
@@ -44,7 +45,8 @@ export default async function DashboardPage({
   const user = await getAuthenticatedUser();
   const resolvedParams = await searchParams;
   const stats = await getDashboardStats({
-    date: resolvedParams.date,
+    startDate: resolvedParams.startDate,
+    endDate: resolvedParams.endDate,
     month: resolvedParams.month ? parseInt(resolvedParams.month, 10) : undefined,
     year: resolvedParams.year ? parseInt(resolvedParams.year, 10) : undefined,
   });

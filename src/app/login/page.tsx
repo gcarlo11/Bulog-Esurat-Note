@@ -124,7 +124,7 @@ export default function LoginPage() {
         {/* Card with sleek glassmorphism styling */}
         <Card className="border-zinc-200 dark:border-zinc-800 bg-white/70 dark:bg-zinc-950/65 backdrop-blur-xl shadow-xl shadow-black/5 dark:shadow-black/40 text-zinc-900 dark:text-white transition-all duration-300">
           <CardHeader className="pb-4 text-center">
-            <CardTitle className="text-zinc-950 dark:text-white text-lg font-bold">Masuk ke Sistem</CardTitle>
+            <CardTitle className="text-zinc-950 dark:text-white text-xl font-bold">Masuk ke Sistem</CardTitle>
             <CardDescription className="text-zinc-500 dark:text-zinc-400 text-xs">
               Gunakan kredensial akun Anda untuk melanjutkan
             </CardDescription>
@@ -208,7 +208,7 @@ export default function LoginPage() {
                 ) : (
                   <>
                     <LogIn size={14} />
-                    Masuk ke Sistem
+                    Login
                   </>
                 )}
               </Button>

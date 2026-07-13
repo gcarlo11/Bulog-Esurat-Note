@@ -76,13 +76,21 @@ async function generateLetterNumber(
     prefix = "NV";
   }
 
-  // Ambil seluruh dokumen dengan prefix yang sama yang aktif
+  const yearOfLetter = letterDate.getFullYear();
+  const startOfYear = new Date(yearOfLetter, 0, 1, 0, 0, 0);
+  const endOfYear = new Date(yearOfLetter, 11, 31, 23, 59, 59);
+
+  // Ambil seluruh dokumen dengan prefix yang sama yang aktif di tahun yang sama
   const samePrefixLetters = await prisma.letter.findMany({
     where: {
       category,
       agendaType: category === "AGENDA" ? agendaType : undefined,
       type: category === "KELUAR_MASUK" ? type : undefined,
       status: "ACTIVE",
+      letterDate: {
+        gte: startOfYear,
+        lte: endOfYear,
+      },
     },
     orderBy: [
       { letterDate: "asc" },
@@ -421,11 +429,21 @@ export async function archiveLetterAction(
 // ============================================
 // Helper: Membangun Filter Tanggal
 // ============================================
-function buildDateFilter(date?: string, month?: number | string, year?: number | string) {
-  if (date) {
-    const startDate = new Date(date + "T00:00:00");
-    const endDate = new Date(date + "T23:59:59");
-    return { gte: startDate, lte: endDate };
+function buildDateFilter(
+  startDate?: string,
+  endDate?: string,
+  month?: number | string,
+  year?: number | string
+) {
+  if (startDate || endDate) {
+    const filter: Record<string, any> = {};
+    if (startDate) {
+      filter.gte = new Date(startDate + "T00:00:00");
+    }
+    if (endDate) {
+      filter.lte = new Date(endDate + "T23:59:59");
+    }
+    return filter;
   }
   
   if (month || year) {
@@ -433,13 +451,13 @@ function buildDateFilter(date?: string, month?: number | string, year?: number |
     const parsedYear = year ? parseInt(String(year), 10) : currentYear;
     if (month) {
       const parsedMonth = parseInt(String(month), 10);
-      const startDate = new Date(parsedYear, parsedMonth - 1, 1, 0, 0, 0);
-      const endDate = new Date(parsedYear, parsedMonth, 0, 23, 59, 59);
-      return { gte: startDate, lte: endDate };
+      const start = new Date(parsedYear, parsedMonth - 1, 1, 0, 0, 0);
+      const end = new Date(parsedYear, parsedMonth, 0, 23, 59, 59);
+      return { gte: start, lte: end };
     } else {
-      const startDate = new Date(parsedYear, 0, 1, 0, 0, 0);
-      const endDate = new Date(parsedYear, 12, 0, 23, 59, 59);
-      return { gte: startDate, lte: endDate };
+      const start = new Date(parsedYear, 0, 1, 0, 0, 0);
+      const end = new Date(parsedYear, 12, 0, 23, 59, 59);
+      return { gte: start, lte: end };
     }
   }
   return undefined;
@@ -452,7 +470,8 @@ export async function getLetters(params?: {
   search?: string;
   page?: number;
   limit?: number;
-  date?: string;
+  startDate?: string;
+  endDate?: string;
   month?: number;
   year?: number;
 }) {
@@ -476,7 +495,7 @@ export async function getLetters(params?: {
     where.status = "ACTIVE"; // Default: tampilkan hanya surat aktif
   }
 
-  const dateFilter = buildDateFilter(params?.date, params?.month, params?.year);
+  const dateFilter = buildDateFilter(params?.startDate, params?.endDate, params?.month, params?.year);
   if (dateFilter) {
     where.letterDate = dateFilter;
   }
@@ -551,7 +570,8 @@ export async function getLetterDetail(letterId: string) {
 // Dashboard Statistics
 // ============================================
 export async function getDashboardStats(params?: {
-  date?: string;
+  startDate?: string;
+  endDate?: string;
   month?: number;
   year?: number;
 }) {
@@ -561,7 +581,7 @@ export async function getDashboardStats(params?: {
   const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
 
   const baseWhere: Record<string, any> = { status: "ACTIVE" };
-  const dateFilter = buildDateFilter(params?.date, params?.month, params?.year);
+  const dateFilter = buildDateFilter(params?.startDate, params?.endDate, params?.month, params?.year);
   if (dateFilter) {
     baseWhere.letterDate = dateFilter;
   }
@@ -620,7 +640,8 @@ export async function getDashboardStats(params?: {
 export async function getAuditLogs(params?: {
   page?: number;
   limit?: number;
-  date?: string;
+  startDate?: string;
+  endDate?: string;
   month?: number;
   year?: number;
 }) {
@@ -631,7 +652,7 @@ export async function getAuditLogs(params?: {
   const skip = (page - 1) * limit;
 
   const where: Record<string, any> = {};
-  const dateFilter = buildDateFilter(params?.date, params?.month, params?.year);
+  const dateFilter = buildDateFilter(params?.startDate, params?.endDate, params?.month, params?.year);
   if (dateFilter) {
     where.createdAt = dateFilter;
   }
@@ -664,7 +685,8 @@ export async function getAuditLogs(params?: {
 export async function getLettersForExport(params?: {
   category?: string;
   type?: string;
-  date?: string;
+  startDate?: string;
+  endDate?: string;
   month?: number;
   year?: number;
 }) {
@@ -681,7 +703,7 @@ export async function getLettersForExport(params?: {
     where.type = params.type;
   }
 
-  const dateFilter = buildDateFilter(params?.date, params?.month, params?.year);
+  const dateFilter = buildDateFilter(params?.startDate, params?.endDate, params?.month, params?.year);
   if (dateFilter) {
     where.letterDate = dateFilter;
   }

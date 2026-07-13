@@ -7,26 +7,35 @@ export function DashboardFilters() {
   const router = useRouter();
   const searchParams = useSearchParams();
 
-  const [date, setDate] = useState(searchParams.get("date") || "");
+  const [startDate, setStartDate] = useState(searchParams.get("startDate") || "");
+  const [endDate, setEndDate] = useState(searchParams.get("endDate") || "");
   const [month, setMonth] = useState(searchParams.get("month") || "");
   const [year, setYear] = useState(searchParams.get("year") || "");
 
   // Sync state with URL params
   useEffect(() => {
-    setDate(searchParams.get("date") || "");
+    setStartDate(searchParams.get("startDate") || "");
+    setEndDate(searchParams.get("endDate") || "");
     setMonth(searchParams.get("month") || "");
     setYear(searchParams.get("year") || "");
   }, [searchParams]);
 
-  function updateFilters(newDate: string, newMonth: string, newYear: string) {
+  function updateFilters(newStart: string, newEnd: string, newMonth: string, newYear: string) {
     const params = new URLSearchParams(searchParams.toString());
     
-    if (newDate) {
-      params.set("date", newDate);
+    if (newStart || newEnd) {
+      if (newStart) params.set("startDate", newStart);
+      else params.delete("startDate");
+      
+      if (newEnd) params.set("endDate", newEnd);
+      else params.delete("endDate");
+      
       params.delete("month");
       params.delete("year");
     } else {
-      params.delete("date");
+      params.delete("startDate");
+      params.delete("endDate");
+      
       if (newMonth) params.set("month", newMonth);
       else params.delete("month");
       
@@ -38,7 +47,8 @@ export function DashboardFilters() {
   }
 
   function handleReset() {
-    setDate("");
+    setStartDate("");
+    setEndDate("");
     setMonth("");
     setYear("");
     router.push("/dashboard");
@@ -46,19 +56,39 @@ export function DashboardFilters() {
 
   return (
     <div style={{ display: "flex", gap: "8px", alignItems: "center", flexWrap: "wrap", marginBottom: "16px" }}>
-      <input
-        type="date"
-        className="filter-select"
-        value={date}
-        onChange={(e) => {
-          const val = e.target.value;
-          setDate(val);
-          setMonth("");
-          setYear("");
-          updateFilters(val, "", "");
-        }}
-        title="Filter Tanggal Spesifik"
-      />
+      <div style={{ display: "flex", alignItems: "center", gap: "4px" }}>
+        <span style={{ fontSize: "12px", color: "var(--text-secondary)" }}>Dari:</span>
+        <input
+          type="date"
+          className="filter-select"
+          value={startDate}
+          onChange={(e) => {
+            const val = e.target.value;
+            setStartDate(val);
+            setMonth("");
+            setYear("");
+            updateFilters(val, endDate, "", "");
+          }}
+          title="Filter Tanggal Mulai"
+        />
+      </div>
+
+      <div style={{ display: "flex", alignItems: "center", gap: "4px" }}>
+        <span style={{ fontSize: "12px", color: "var(--text-secondary)" }}>Sampai:</span>
+        <input
+          type="date"
+          className="filter-select"
+          value={endDate}
+          onChange={(e) => {
+            const val = e.target.value;
+            setEndDate(val);
+            setMonth("");
+            setYear("");
+            updateFilters(startDate, val, "", "");
+          }}
+          title="Filter Tanggal Akhir"
+        />
+      </div>
       
       <select
         className="filter-select"
@@ -66,8 +96,9 @@ export function DashboardFilters() {
         onChange={(e) => {
           const val = e.target.value;
           setMonth(val);
-          setDate("");
-          updateFilters("", val, year);
+          setStartDate("");
+          setEndDate("");
+          updateFilters("", "", val, year);
         }}
         title="Filter Bulan"
       >
@@ -95,15 +126,16 @@ export function DashboardFilters() {
         onChange={(e) => {
           const val = e.target.value;
           setYear(val);
-          setDate("");
-          updateFilters("", month, val);
+          setStartDate("");
+          setEndDate("");
+          updateFilters("", "", month, val);
         }}
         min="2000"
         max="2100"
         title="Filter Tahun"
       />
 
-      {(date || month || year) && (
+      {(startDate || endDate || month || year) && (
         <button
           type="button"
           className="btn btn-secondary btn-sm"

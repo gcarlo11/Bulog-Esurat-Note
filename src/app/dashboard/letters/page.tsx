@@ -59,9 +59,10 @@ function formatRupiah(value: number) {
 
 const CATEGORIES = [
   { key: "ALL", label: "Semua Dokumen" },
+  { key: "NOTA_VERIFIKASI", label: "Nota Verifikasi" },
   { key: "KELUAR_MASUK", label: "Surat Keluar / Masuk" },
   { key: "AGENDA", label: "Surat Agenda" },
-  { key: "NOTA_VERIFIKASI", label: "Nota Verifikasi" },
+
 ];
 
 export default function LettersPage() {
@@ -83,8 +84,9 @@ export default function LettersPage() {
   const [loading, setLoading] = useState(true);
   const [exporting, setExporting] = useState(false);
 
-  // Filter Tanggal / Bulan / Tahun
-  const [filterDate, setFilterDate] = useState("");
+  // Filter Tanggal Mulai / Akhir / Bulan / Tahun
+  const [filterStartDate, setFilterStartDate] = useState("");
+  const [filterEndDate, setFilterEndDate] = useState("");
   const [filterMonth, setFilterMonth] = useState("");
   const [filterYear, setFilterYear] = useState("");
 
@@ -98,10 +100,10 @@ export default function LettersPage() {
     categoryTab === "ALL"
       ? "Semua Dokumen"
       : categoryTab === "KELUAR_MASUK"
-      ? "Surat Keluar Masuk"
-      : categoryTab === "AGENDA"
-      ? "Surat Agenda"
-      : "Nota Verifikasi";
+        ? "Surat Keluar Masuk"
+        : categoryTab === "AGENDA"
+          ? "Surat Agenda"
+          : "Nota Verifikasi";
 
   const fetchLetters = useCallback(async () => {
     setLoading(true);
@@ -111,7 +113,8 @@ export default function LettersPage() {
         type: type !== "ALL" ? type : undefined,
         search: search || undefined,
         page,
-        date: filterDate || undefined,
+        startDate: filterStartDate || undefined,
+        endDate: filterEndDate || undefined,
         month: filterMonth ? parseInt(filterMonth, 10) : undefined,
         year: filterYear ? parseInt(filterYear, 10) : undefined,
       });
@@ -123,7 +126,7 @@ export default function LettersPage() {
     } finally {
       setLoading(false);
     }
-  }, [categoryTab, type, search, page, filterDate, filterMonth, filterYear]);
+  }, [categoryTab, type, search, page, filterStartDate, filterEndDate, filterMonth, filterYear]);
 
   useEffect(() => {
     fetchLetters();
@@ -145,20 +148,54 @@ export default function LettersPage() {
     setPage(1);
   }
 
+  function formatDateLabel(dateStr: string) {
+    if (!dateStr) return "";
+    return new Date(dateStr).toLocaleDateString("id-ID", {
+      day: "2-digit",
+      month: "long",
+      year: "numeric"
+    });
+  }
+
   async function handleExport(format: "excel" | "pdf") {
     setExporting(true);
     try {
       const allLetters = await getLettersForExport({
         category: categoryTab,
         type: type !== "ALL" ? type : undefined,
-        date: filterDate || undefined,
+        startDate: filterStartDate || undefined,
+        endDate: filterEndDate || undefined,
         month: filterMonth ? parseInt(filterMonth, 10) : undefined,
         year: filterYear ? parseInt(filterYear, 10) : undefined,
       });
+
+      let periodLabel = "Per: Semua Waktu";
+      if (filterStartDate || filterEndDate) {
+        if (filterStartDate && filterEndDate) {
+          periodLabel = `Per: ${formatDateLabel(filterStartDate)} s/d ${formatDateLabel(filterEndDate)}`;
+        } else if (filterStartDate) {
+          periodLabel = `Per Mulai: ${formatDateLabel(filterStartDate)}`;
+        } else if (filterEndDate) {
+          periodLabel = `Per s/d: ${formatDateLabel(filterEndDate)}`;
+        }
+      } else if (filterMonth || filterYear) {
+        const yearStr = filterYear || new Date().getFullYear().toString();
+        if (filterMonth) {
+          const monthNames = [
+            "Januari", "Februari", "Maret", "April", "Mei", "Juni",
+            "Juli", "Agustus", "September", "Oktober", "November", "Desember"
+          ];
+          const monthName = monthNames[parseInt(filterMonth, 10) - 1];
+          periodLabel = `Per Bulan: ${monthName} ${yearStr}`;
+        } else {
+          periodLabel = `Per Tahun: ${yearStr}`;
+        }
+      }
+
       if (format === "excel") {
-        exportToExcel(allLetters as any, filterLabel);
+        exportToExcel(allLetters as any, filterLabel, periodLabel);
       } else {
-        exportToPdf(allLetters as any, filterLabel);
+        exportToPdf(allLetters as any, filterLabel, periodLabel);
       }
     } catch (e) {
       console.error("Export failed:", e);
@@ -258,25 +295,46 @@ export default function LettersPage() {
             )}
 
             {/* Date Filters */}
-            <div style={{ display: "flex", gap: "6px", alignItems: "center" }}>
-              <input
-                type="date"
-                className="filter-select"
-                value={filterDate}
-                onChange={(e) => {
-                  setFilterDate(e.target.value);
-                  setFilterMonth("");
-                  setFilterYear("");
-                  setPage(1);
-                }}
-                title="Filter Tanggal Spesifik"
-              />
+            <div style={{ display: "flex", gap: "6px", alignItems: "center", flexWrap: "wrap" }}>
+              <div style={{ display: "flex", alignItems: "center", gap: "4px" }}>
+                <span style={{ fontSize: "11px", color: "var(--text-secondary)" }}>Dari:</span>
+                <input
+                  type="date"
+                  className="filter-select"
+                  value={filterStartDate}
+                  onChange={(e) => {
+                    setFilterStartDate(e.target.value);
+                    setFilterMonth("");
+                    setFilterYear("");
+                    setPage(1);
+                  }}
+                  title="Filter Tanggal Mulai"
+                />
+              </div>
+
+              <div style={{ display: "flex", alignItems: "center", gap: "4px" }}>
+                <span style={{ fontSize: "11px", color: "var(--text-secondary)" }}>Sampai:</span>
+                <input
+                  type="date"
+                  className="filter-select"
+                  value={filterEndDate}
+                  onChange={(e) => {
+                    setFilterEndDate(e.target.value);
+                    setFilterMonth("");
+                    setFilterYear("");
+                    setPage(1);
+                  }}
+                  title="Filter Tanggal Akhir"
+                />
+              </div>
+
               <select
                 className="filter-select"
                 value={filterMonth}
                 onChange={(e) => {
                   setFilterMonth(e.target.value);
-                  setFilterDate("");
+                  setFilterStartDate("");
+                  setFilterEndDate("");
                   setPage(1);
                 }}
                 title="Filter Bulan"
@@ -303,19 +361,21 @@ export default function LettersPage() {
                 value={filterYear}
                 onChange={(e) => {
                   setFilterYear(e.target.value);
-                  setFilterDate("");
+                  setFilterStartDate("");
+                  setFilterEndDate("");
                   setPage(1);
                 }}
                 min="2000"
                 max="2100"
                 title="Filter Tahun"
               />
-              {(filterDate || filterMonth || filterYear) && (
+              {(filterStartDate || filterEndDate || filterMonth || filterYear) && (
                 <button
                   type="button"
                   className="btn btn-secondary btn-sm"
                   onClick={() => {
-                    setFilterDate("");
+                    setFilterStartDate("");
+                    setFilterEndDate("");
                     setFilterMonth("");
                     setFilterYear("");
                     setPage(1);
@@ -552,8 +612,8 @@ export default function LettersPage() {
               {search
                 ? "Tidak ditemukan dokumen yang cocok dengan pencarian."
                 : canEdit(user.role)
-                ? "Mulai dengan mendaftarkan dokumen pertama."
-                : "Belum ada dokumen yang terdaftar di sistem."}
+                  ? "Mulai dengan mendaftarkan dokumen pertama."
+                  : "Belum ada dokumen yang terdaftar di sistem."}
             </p>
           </div>
         )}
