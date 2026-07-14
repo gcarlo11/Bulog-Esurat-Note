@@ -474,6 +474,7 @@ export async function getLetters(params?: {
   endDate?: string;
   month?: number;
   year?: number;
+  agendaType?: string;
 }) {
   await getAuthenticatedUser();
 
@@ -488,6 +489,9 @@ export async function getLetters(params?: {
   }
   if (params?.type && params.type !== "ALL") {
     where.type = params.type;
+  }
+  if (params?.agendaType && params.agendaType !== "ALL") {
+    where.agendaType = params.agendaType;
   }
   if (params?.status && params.status !== "ALL") {
     where.status = params.status;
@@ -689,6 +693,7 @@ export async function getLettersForExport(params?: {
   endDate?: string;
   month?: number;
   year?: number;
+  agendaType?: string;
 }) {
   await getAuthenticatedUser();
 
@@ -701,6 +706,9 @@ export async function getLettersForExport(params?: {
   }
   if (params?.type && params.type !== "ALL") {
     where.type = params.type;
+  }
+  if (params?.agendaType && params.agendaType !== "ALL") {
+    where.agendaType = params.agendaType;
   }
 
   const dateFilter = buildDateFilter(params?.startDate, params?.endDate, params?.month, params?.year);

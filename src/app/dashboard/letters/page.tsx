@@ -65,12 +65,30 @@ const CATEGORIES = [
 
 ];
 
+const agendaTypesMapping = [
+  { label: "Surat Perintah", code: "SP" },
+  { label: "Surat Keputusan", code: "K" },
+  { label: "Surat Perjanjian Kerjasama", code: "KK" },
+  { label: "Berita Acara Serah Terima", code: "BAST" },
+  { label: "Berita Acara", code: "BA" },
+  { label: "Surat Pengantar", code: "PT" },
+  { label: "Edaran", code: "SE" },
+  { label: "Pengumuman", code: "PENG" },
+  { label: "Surat Keterangan/Pernyataan", code: "T" },
+  { label: "Memo/Nota Intern", code: "M/NI" },
+  { label: "Surat Kuasa", code: "S" },
+  { label: "Undangan", code: "U" },
+  { label: "Claim", code: "C" },
+  { label: "Surat Izin (Cuti)", code: "I" },
+];
+
 export default function LettersPage() {
   const user = useUser();
   const router = useRouter();
   const searchParams = useSearchParams();
   const categoryFilter = searchParams.get("category") || "ALL";
   const typeFilter = searchParams.get("type") || "ALL";
+  const agendaTypeFilter = searchParams.get("agendaType") || "ALL";
   const openCreate = searchParams.get("create") === "true";
 
   const [categoryTab, setCategoryTab] = useState<string>(categoryFilter);
@@ -80,6 +98,7 @@ export default function LettersPage() {
   const [totalPages, setTotalPages] = useState(1);
   const [search, setSearch] = useState("");
   const [type, setType] = useState(typeFilter);
+  const [agendaType, setAgendaType] = useState<string>(agendaTypeFilter);
   const [showModal, setShowModal] = useState(false);
   const [loading, setLoading] = useState(true);
   const [exporting, setExporting] = useState(false);
@@ -93,6 +112,7 @@ export default function LettersPage() {
   // Sync categoryTab state when URL query parameter changes
   useEffect(() => {
     setCategoryTab(searchParams.get("category") || "ALL");
+    setAgendaType(searchParams.get("agendaType") || "ALL");
     setPage(1);
   }, [searchParams]);
 
@@ -102,7 +122,9 @@ export default function LettersPage() {
       : categoryTab === "KELUAR_MASUK"
         ? "Surat Keluar Masuk"
         : categoryTab === "AGENDA"
-          ? "Surat Agenda"
+          ? agendaType !== "ALL"
+            ? `Surat Agenda - ${agendaType}`
+            : "Surat Agenda"
           : "Nota Verifikasi";
 
   const fetchLetters = useCallback(async () => {
@@ -111,6 +133,7 @@ export default function LettersPage() {
       const result = await getLetters({
         category: categoryTab,
         type: type !== "ALL" ? type : undefined,
+        agendaType: categoryTab === "AGENDA" && agendaType !== "ALL" ? agendaType : undefined,
         search: search || undefined,
         page,
         startDate: filterStartDate || undefined,
@@ -126,7 +149,7 @@ export default function LettersPage() {
     } finally {
       setLoading(false);
     }
-  }, [categoryTab, type, search, page, filterStartDate, filterEndDate, filterMonth, filterYear]);
+  }, [categoryTab, type, agendaType, search, page, filterStartDate, filterEndDate, filterMonth, filterYear]);
 
   useEffect(() => {
     fetchLetters();
@@ -136,6 +159,22 @@ export default function LettersPage() {
     setType(typeFilter);
     setPage(1);
   }, [typeFilter]);
+
+  useEffect(() => {
+    setAgendaType(agendaTypeFilter);
+    setPage(1);
+  }, [agendaTypeFilter]);
+
+  function handleAgendaTypeFilter(value: string) {
+    const params = new URLSearchParams(searchParams.toString());
+    if (value === "ALL") {
+      params.delete("agendaType");
+    } else {
+      params.set("agendaType", value);
+    }
+    params.set("page", "1");
+    router.push(`/dashboard/letters?${params.toString()}`);
+  }
 
   useEffect(() => {
     if (openCreate && canEdit(user.role)) {
@@ -163,6 +202,7 @@ export default function LettersPage() {
       const allLetters = await getLettersForExport({
         category: categoryTab,
         type: type !== "ALL" ? type : undefined,
+        agendaType: categoryTab === "AGENDA" && agendaType !== "ALL" ? agendaType : undefined,
         startDate: filterStartDate || undefined,
         endDate: filterEndDate || undefined,
         month: filterMonth ? parseInt(filterMonth, 10) : undefined,
@@ -254,6 +294,7 @@ export default function LettersPage() {
               } else {
                 params.set("category", cat.key);
               }
+              params.delete("agendaType");
               params.set("page", "1");
               router.push(`/dashboard/letters?${params.toString()}`);
             }}
@@ -263,6 +304,53 @@ export default function LettersPage() {
           </button>
         ))}
       </div>
+
+      {/* Filter Jenis Agenda */}
+      {categoryTab === "AGENDA" && (
+        <div style={{
+          display: "flex",
+          alignItems: "center",
+          gap: "10px",
+          flexWrap: "wrap",
+          marginBottom: "16px",
+          padding: "10px 14px",
+          background: "var(--bg-subtle)",
+          borderRadius: "var(--radius-md)",
+          border: "1px solid var(--border-default)"
+        }}>
+          <span style={{ fontSize: "12px", fontWeight: 600, color: "var(--text-secondary)", marginRight: "4px" }}>
+            Jenis Agenda:
+          </span>
+          <div style={{ display: "flex", gap: "6px", flexWrap: "wrap" }}>
+            <button
+              className={`btn btn-sm ${agendaType === "ALL" ? "btn-primary" : "btn-secondary"}`}
+              onClick={() => handleAgendaTypeFilter("ALL")}
+              style={{
+                fontSize: "11px",
+                padding: "4px 10px",
+                borderRadius: "20px",
+              }}
+            >
+              ALL
+            </button>
+            {agendaTypesMapping.map((item) => (
+              <button
+                key={item.code}
+                className={`btn btn-sm ${agendaType === item.label ? "btn-primary" : "btn-secondary"}`}
+                onClick={() => handleAgendaTypeFilter(item.label)}
+                title={`${item.label} (${item.code})`}
+                style={{
+                  fontSize: "11px",
+                  padding: "4px 10px",
+                  borderRadius: "20px",
+                }}
+              >
+                {item.code}
+              </button>
+            ))}
+          </div>
+        </div>
+      )}
 
       {/* Main Table Card */}
       <div className="table-wrapper" style={{ border: "1px solid var(--border-default)" }}>
