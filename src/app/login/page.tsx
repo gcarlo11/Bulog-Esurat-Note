@@ -111,9 +111,9 @@ export default function LoginPage() {
       <div className="w-full max-w-md relative z-10">
         {/* Logo & Branding */}
         <div className="text-center mb-6">
-          {/* <div className="inline-flex items-center justify-center w-14 h-14 rounded-2xl bg-zinc-950 text-white dark:bg-white dark:text-zinc-950 shadow-lg shadow-black/10 dark:shadow-white/5 mb-3 ring-4 ring-zinc-500/5 transition-colors duration-300">
-            <Inbox size={26} strokeWidth={2} />
-          </div> */}
+          <div className="inline-flex items-center justify-center mb-4">
+            <img src="/logo.svg" alt="BULOG Logo" className="h-16 w-auto object-contain" />
+          </div>
           <h1 className="text-4xl font-black text-zinc-950 dark:text-white tracking-tight">SISTEM E-SURAT</h1>
           <p className="text-zinc-600 dark:text-zinc-400 text-xs mt-1.5 flex items-center justify-center gap-1.5 font-medium">
             <Building2 size={12} />
