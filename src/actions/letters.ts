@@ -53,12 +53,12 @@ async function generateLetterNumber(
   let prefix = "DOC";
 
   if (category === "KELUAR_MASUK") {
-    prefix = type === "MASUK" ? "SM" : "SK";
+    prefix = type === "MASUK" ? "SM" : "B";
   } else if (category === "AGENDA") {
     const agendaPrefixes: Record<string, string> = {
       "Surat Perintah": "SP",
       "Surat Keputusan": "K",
-      "Surat Perjanjian Kerjasama": "KK",
+      "Surat Perjanjian Kerjasama": "PK",
       "Berita Acara Serah Terima": "BAST",
       "Berita Acara": "BA",
       "Surat Pengantar": "PT",

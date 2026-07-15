@@ -68,7 +68,7 @@ const CATEGORIES = [
 const agendaTypesMapping = [
   { label: "Surat Perintah", code: "SP" },
   { label: "Surat Keputusan", code: "K" },
-  { label: "Surat Perjanjian Kerjasama", code: "KK" },
+  { label: "Surat Perjanjian Kerjasama", code: "PK" },
   { label: "Berita Acara Serah Terima", code: "BAST" },
   { label: "Berita Acara", code: "BA" },
   { label: "Surat Pengantar", code: "PT" },
