@@ -114,6 +114,27 @@ export function exportToExcel(letters: LetterExportData[], filterLabel: string, 
       l.status === "ACTIVE" ? "Aktif" : "Arsip",
       l.createdBy.name,
     ]);
+  } else if (activeCategory === "NOTA_DIVISI") {
+    columnHeaders = [
+      "No",
+      "Nomor Nota",
+      "Keterangan",
+      "Tanggal Nota",
+      "Jumlah",
+      "TTD",
+      "Status",
+      "Didata Oleh",
+    ];
+    dataRows = letters.map((l, i) => [
+      i + 1,
+      l.letterNumber,
+      l.subject,
+      formatDateShort(l.letterDate),
+      l.nominal ? formatRupiah(l.nominal) : "—",
+      l.paraf || "—",
+      l.status === "ACTIVE" ? "Aktif" : "Arsip",
+      l.createdBy.name,
+    ]);
   } else if (activeCategory === "NOTA_VERIFIKASI") {
     columnHeaders = [
       "No",
@@ -306,6 +327,27 @@ export function exportToPdf(letters: LetterExportData[], filterLabel: string, pe
       8: { cellWidth: 20 },
     };
     totalTableWidth = 245; // Total: 10+30+16+55+35+35+24+20+20 = 245
+  } else if (activeCategory === "NOTA_DIVISI") {
+    headers = ["No", "Nomor Nota", "Keterangan", "Tanggal", "Jumlah", "TTD", "Status"];
+    bodyData = letters.map((l, i) => [
+      (i + 1).toString(),
+      l.letterNumber,
+      l.subject,
+      formatDateShort(l.letterDate),
+      l.nominal ? formatRupiah(l.nominal) : "—",
+      l.paraf || "—",
+      l.status === "ACTIVE" ? "Aktif" : "Arsip",
+    ]);
+    columnStyles = {
+      0: { halign: "center", cellWidth: 12 },
+      1: { cellWidth: 40 },
+      2: { cellWidth: 80 },
+      3: { halign: "center", cellWidth: 30 },
+      4: { halign: "right", cellWidth: 35 },
+      5: { halign: "center", cellWidth: 35 },
+      6: { halign: "center", cellWidth: 20 },
+    };
+    totalTableWidth = 252; // Total: 12+40+80+30+35+35+20 = 252
   } else if (activeCategory === "NOTA_VERIFIKASI") {
     headers = ["No", "Nomor Nota", "Perihal", "Tanggal", "Nominal", "Paraf", "Status"];
     bodyData = letters.map((l, i) => [
@@ -334,6 +376,7 @@ export function exportToPdf(letters: LetterExportData[], filterLabel: string, pe
       if (l.category === "AGENDA") detail = `Jenis: ${l.agendaType}`;
       else if (l.category === "KELUAR_MASUK") detail = `Tipe: ${l.type}`;
       else if (l.category === "NOTA_VERIFIKASI") detail = `Nominal: ${l.nominal ? formatRupiah(l.nominal) : "—"}`;
+      else if (l.category === "NOTA_DIVISI") detail = `Jumlah: ${l.nominal ? formatRupiah(l.nominal) : "—"}`;
 
       return [
         (i + 1).toString(),

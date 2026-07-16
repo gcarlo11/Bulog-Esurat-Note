@@ -182,7 +182,7 @@ export default function LetterDetailPage() {
   async function handleEdit(formData: FormData) {
     setEditLoading(true);
     try {
-      if (letter?.category === "NOTA_VERIFIKASI") {
+      if (letter?.category === "NOTA_VERIFIKASI" || letter?.category === "NOTA_DIVISI") {
         formData.set("nominal", nominalRaw.replace(/\./g, ""));
       }
       const result = await updateLetterAction(letterId, formData);
@@ -405,6 +405,29 @@ export default function LetterDetailPage() {
                 </>
               )}
 
+              {/* SPECIFIC FIELDS: NOTA INTERNAL / DIVISI */}
+              {letter.category === "NOTA_DIVISI" && (
+                <>
+                  <div className="detail-item">
+                    <div className="detail-label">Jumlah</div>
+                    <div className="detail-value" style={{ fontWeight: 700, fontSize: "16px", color: "var(--text-primary)" }}>
+                      {letter.nominal ? formatRupiah(letter.nominal) : "—"}
+                    </div>
+                  </div>
+                  <div className="detail-item">
+                    <div className="detail-label">Tanggal Nota</div>
+                    <div className="detail-value">{formatDate(letter.letterDate)}</div>
+                  </div>
+                  <div className="detail-item">
+                    <div className="detail-label">TTD / Mengetahui</div>
+                    <div className="detail-value" style={{ fontStyle: "italic" }}>{letter.paraf || "—"}</div>
+                  </div>
+                  <div className="detail-item">
+                    {/* Empty cell spacer */}
+                  </div>
+                </>
+              )}
+
               {/* SPECIFIC FIELDS: NOTA VERIFIKASI */}
               {letter.category === "NOTA_VERIFIKASI" && (
                 <>
@@ -495,10 +518,10 @@ export default function LetterDetailPage() {
                       </>
                     )}
 
-                    {letter.category === "NOTA_VERIFIKASI" && (
+                    {(letter.category === "NOTA_VERIFIKASI" || letter.category === "NOTA_DIVISI") && (
                       <>
-                        <div><strong>Nominal:</strong> {v.nominal ? formatRupiah(v.nominal) : "—"}</div>
-                        <div><strong>Paraf:</strong> {v.paraf || "—"}</div>
+                        <div><strong>Jumlah / Nominal:</strong> {v.nominal ? formatRupiah(v.nominal) : "—"}</div>
+                        <div><strong>TTD / Paraf:</strong> {v.paraf || "—"}</div>
                       </>
                     )}
 
@@ -641,6 +664,37 @@ export default function LetterDetailPage() {
                       <label className="form-label" htmlFor="nomorPetunjuk">Nomor Petunjuk</label>
                       <input id="nomorPetunjuk" name="nomorPetunjuk" className="form-input" defaultValue={letter.nomorPetunjuk || ""} />
                     </div>
+                  </div>
+                </>
+              )}
+
+              {/* SPECIFIC FIELDS FOR NOTA INTERNAL / DIVISI */}
+              {letter.category === "NOTA_DIVISI" && (
+                <>
+                  <div className="form-group">
+                    <label className="form-label" htmlFor="subject">Keterangan Nota *</label>
+                    <input id="subject" name="subject" className="form-input" defaultValue={letter.subject} required />
+                  </div>
+                  <div className="form-row">
+                    <div className="form-group">
+                      <label className="form-label" htmlFor="nominal">Jumlah (Rp) *</label>
+                      <input
+                        id="nominal"
+                        type="text"
+                        className="form-input"
+                        value={nominalRaw}
+                        onChange={(e) => handleNominalChange(e.target.value)}
+                        required
+                      />
+                    </div>
+                    <div className="form-group">
+                      <label className="form-label" htmlFor="letterDate">Tanggal Nota *</label>
+                      <input id="letterDate" name="letterDate" type="date" className="form-input" defaultValue={new Date(letter.letterDate).toISOString().split("T")[0]} required />
+                    </div>
+                  </div>
+                  <div className="form-group">
+                    <label className="form-label" htmlFor="paraf">TTD / Mengetahui *</label>
+                    <input id="paraf" name="paraf" className="form-input" defaultValue={letter.paraf || ""} required />
                   </div>
                 </>
               )}

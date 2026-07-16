@@ -27,7 +27,7 @@ const agendaTypes = [
 ];
 
 export function CreateLetterModal({ onClose, onSuccess }: CreateLetterModalProps) {
-  const [category, setCategory] = useState<"KELUAR_MASUK" | "AGENDA" | "NOTA_VERIFIKASI">("KELUAR_MASUK");
+  const [category, setCategory] = useState<"KELUAR_MASUK" | "AGENDA" | "NOTA_VERIFIKASI" | "NOTA_DIVISI">("KELUAR_MASUK");
   const [letterType, setLetterType] = useState("MASUK");
   const [nominalRaw, setNominalRaw] = useState("");
   const [error, setError] = useState("");
@@ -50,7 +50,7 @@ export function CreateLetterModal({ onClose, onSuccess }: CreateLetterModalProps
     
     // Append fields that might be modified/controlled by React state
     formData.set("category", category);
-    if (category === "NOTA_VERIFIKASI") {
+    if (category === "NOTA_VERIFIKASI" || category === "NOTA_DIVISI") {
       formData.set("nominal", nominalRaw.replace(/\./g, ""));
     }
 
@@ -109,6 +109,7 @@ export function CreateLetterModal({ onClose, onSuccess }: CreateLetterModalProps
               <option value="KELUAR_MASUK">Surat Keluar / Masuk</option>
               <option value="AGENDA">Surat Agenda (14 Jenis)</option>
               <option value="NOTA_VERIFIKASI">Nota Verifikasi Keuangan</option>
+              <option value="NOTA_DIVISI">Nota Internal / Divisi</option>
             </select>
           </div>
 
@@ -404,6 +405,76 @@ export function CreateLetterModal({ onClose, onSuccess }: CreateLetterModalProps
                   type="text"
                   className="form-input"
                   placeholder="Nama pejabat pemberi persetujuan paraf..."
+                  required
+                />
+              </div>
+            </>
+          )}
+
+          {/* ======================================================== */}
+          {/* FORM D: NOTA INTERNAL / DIVISI                           */}
+          {/* ======================================================== */}
+          {category === "NOTA_DIVISI" && (
+            <>
+              <div className="form-group">
+                <label className="form-label" htmlFor="subject">
+                  Keterangan Nota *
+                </label>
+                <input
+                  id="subject"
+                  name="subject"
+                  type="text"
+                  className="form-input"
+                  placeholder="Masukkan keterangan/keperluan nota divisi..."
+                  required
+                />
+              </div>
+
+              <div className="form-row">
+                <div className="form-group">
+                  <label className="form-label" htmlFor="nominal">
+                    Jumlah (Rupiah) *
+                  </label>
+                  <div style={{ position: "relative" }}>
+                    <span style={{ position: "absolute", left: "12px", top: "50%", transform: "translateY(-50%)", fontSize: "13px", color: "var(--text-secondary)", fontWeight: 500 }}>
+                      Rp
+                    </span>
+                    <input
+                      id="nominal"
+                      type="text"
+                      className="form-input"
+                      style={{ paddingLeft: "36px" }}
+                      placeholder="Masukkan jumlah..."
+                      value={nominalRaw}
+                      onChange={(e) => handleNominalChange(e.target.value)}
+                      required
+                    />
+                  </div>
+                </div>
+                <div className="form-group">
+                  <label className="form-label" htmlFor="letterDate">
+                    Tanggal Nota *
+                  </label>
+                  <input
+                    id="letterDate"
+                    name="letterDate"
+                    type="date"
+                    className="form-input"
+                    required
+                  />
+                </div>
+              </div>
+
+              <div className="form-group">
+                <label className="form-label" htmlFor="paraf">
+                  TTD / Mengetahui *
+                </label>
+                <input
+                  id="paraf"
+                  name="paraf"
+                  type="text"
+                  className="form-input"
+                  placeholder="Nama pejabat yang menandatangani / TTD..."
                   required
                 />
               </div>

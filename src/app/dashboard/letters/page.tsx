@@ -59,10 +59,10 @@ function formatRupiah(value: number) {
 
 const CATEGORIES = [
   { key: "ALL", label: "Semua Dokumen" },
+  { key: "NOTA_DIVISI", label: "Nota Internal / Divisi" },
   { key: "NOTA_VERIFIKASI", label: "Nota Verifikasi" },
   { key: "KELUAR_MASUK", label: "Surat Keluar / Masuk" },
   { key: "AGENDA", label: "Surat Agenda" },
-
 ];
 
 const agendaTypesMapping = [
@@ -125,7 +125,9 @@ export default function LettersPage() {
           ? agendaType !== "ALL"
             ? `Surat Agenda - ${agendaType}`
             : "Surat Agenda"
-          : "Nota Verifikasi";
+          : categoryTab === "NOTA_DIVISI"
+            ? "Nota Internal / Divisi"
+            : "Nota Verifikasi";
 
   const fetchLetters = useCallback(async () => {
     setLoading(true);
@@ -518,6 +520,18 @@ export default function LettersPage() {
                     <th>Aksi</th>
                   </tr>
                 </thead>
+              ) : categoryTab === "NOTA_DIVISI" ? (
+                <thead>
+                  <tr>
+                    <th>No. Nota</th>
+                    <th>Keterangan</th>
+                    <th>Tanggal</th>
+                    <th>Jumlah</th>
+                    <th>TTD</th>
+                    <th>Status</th>
+                    <th>Aksi</th>
+                  </tr>
+                </thead>
               ) : categoryTab === "NOTA_VERIFIKASI" ? (
                 <thead>
                   <tr>
@@ -598,6 +612,29 @@ export default function LettersPage() {
                     );
                   }
 
+                  if (categoryTab === "NOTA_DIVISI") {
+                    return (
+                      <tr key={letter.id}>
+                        <td><span className="id-cell">{letter.letterNumber}</span></td>
+                        <td style={{ maxWidth: "250px", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{letter.subject}</td>
+                        <td style={{ fontSize: "12px" }}>{formatDate(letter.letterDate)}</td>
+                        <td style={{ fontWeight: 600, color: "var(--text-primary)" }}>{letter.nominal ? formatRupiah(letter.nominal) : "—"}</td>
+                        <td><span style={{ fontStyle: "italic", fontSize: "12px" }}>{letter.paraf || "—"}</span></td>
+                        <td>
+                          <span className={`status-badge status-${letter.status.toLowerCase()}`}>
+                            <span className="status-dot"></span>
+                            {letter.status === "ACTIVE" ? "Aktif" : "Arsip"}
+                          </span>
+                        </td>
+                        <td>
+                          <Link href={`/dashboard/letters/${letter.id}`} className="btn btn-secondary btn-sm" style={{ padding: "4px 8px" }}>
+                            <Eye size={12} /> Detail
+                          </Link>
+                        </td>
+                      </tr>
+                    );
+                  }
+
                   if (categoryTab === "NOTA_VERIFIKASI") {
                     return (
                       <tr key={letter.id}>
@@ -645,6 +682,9 @@ export default function LettersPage() {
                           <span>Tipe: {letter.type}</span>
                         )}
                         {letter.category === "NOTA_VERIFIKASI" && (
+                          <span style={{ fontWeight: 500 }}>{letter.nominal ? formatRupiah(letter.nominal) : "—"}</span>
+                        )}
+                        {letter.category === "NOTA_DIVISI" && (
                           <span style={{ fontWeight: 500 }}>{letter.nominal ? formatRupiah(letter.nominal) : "—"}</span>
                         )}
                       </td>

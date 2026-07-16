@@ -13,6 +13,7 @@ import {
   ShieldCheck,
   LogOut,
   Inbox,
+  FileText,
 } from "lucide-react";
 
 interface SidebarProps {
@@ -37,6 +38,7 @@ const navGroups = [
       { name: "Surat Agenda", href: "/dashboard/letters?category=AGENDA", icon: BookOpen },
       { name: "Surat Keluar / Masuk", href: "/dashboard/letters?category=KELUAR_MASUK", icon: Mail },
       { name: "Nota Verifikasi", href: "/dashboard/letters?category=NOTA_VERIFIKASI", icon: FileCheck },
+      { name: "Nota Internal / Divisi", href: "/dashboard/letters?category=NOTA_DIVISI", icon: FileText },
       { name: "Semua Dokumen", href: "/dashboard/letters", icon: Layers },
     ],
   },

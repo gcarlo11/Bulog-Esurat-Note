@@ -153,8 +153,8 @@ export default async function DashboardPage({
                           <span style={{ fontWeight: 500, color: "var(--text-primary)" }}>{letter.subject}</span>
                         </td>
                         <td>
-                          <span className={`type-badge type-${(letter.type ?? "").toLowerCase()}`}>
-                            {letter.type === "MASUK" ? "Masuk" : letter.type === "KELUAR" ? "Keluar" : letter.category}
+                          <span className={`type-badge type-${(letter.type ?? letter.category).toLowerCase()}`}>
+                            {letter.type === "MASUK" ? "Masuk" : letter.type === "KELUAR" ? "Keluar" : letter.category.replace("_", " ")}
                           </span>
                         </td>
                         <td>

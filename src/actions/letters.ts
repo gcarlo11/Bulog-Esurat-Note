@@ -74,6 +74,8 @@ async function generateLetterNumber(
     prefix = agendaPrefixes[agendaType || ""] || "AGD";
   } else if (category === "NOTA_VERIFIKASI") {
     prefix = "NV";
+  } else if (category === "NOTA_DIVISI") {
+    prefix = "ND";
   }
 
   const yearOfLetter = letterDate.getFullYear();
