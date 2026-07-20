@@ -25,8 +25,8 @@ import {
 
 // Akun demo untuk quick-fill dengan desain ter-themed
 const DEMO_ACCOUNTS = [
-  { role: "Admin", email: "admin@esurat.local", password: "admin123", color: "bg-indigo-600/10 text-indigo-600 dark:text-indigo-400 border-indigo-500/20 hover:bg-indigo-600/20" },
-  { role: "Staff", email: "staff@esurat.local", password: "staff123", color: "bg-sky-600/10 text-sky-600 dark:text-sky-400 border-sky-500/20 hover:bg-sky-600/20" },
+  { role: "Admin", email: "admin@esurat.local", password: "admin123", color: "bg-brand-blue/10 text-brand-blue dark:text-brand-gold border-brand-blue/20 dark:border-brand-gold/20 hover:bg-brand-blue/20 dark:hover:bg-brand-gold/10" },
+  { role: "Staff", email: "staff@esurat.local", password: "staff123", color: "bg-brand-gold/10 text-brand-gold dark:text-brand-blue border-brand-gold/20 dark:border-brand-blue/20 hover:bg-brand-gold/20 dark:hover:bg-brand-blue/10" },
   { role: "Viewer", email: "viewer@esurat.local", password: "viewer123", color: "bg-emerald-600/10 text-emerald-600 dark:text-emerald-400 border-emerald-500/20 hover:bg-emerald-600/20" },
 ];
 
@@ -197,7 +197,7 @@ export default function LoginPage() {
 
               <Button
                 type="submit"
-                className="w-full h-10 bg-zinc-950 hover:bg-zinc-900 text-white dark:bg-white dark:text-zinc-950 dark:hover:bg-zinc-200 font-semibold shadow-md transition-all duration-200 text-sm border-none"
+                className="w-full h-10 bg-brand-blue hover:bg-indigo-700 border border-brand-blue text-white dark:bg-brand-blue dark:border-brand-gold dark:hover:bg-brand-gold dark:hover:text-brand-blue font-semibold shadow-md transition-all duration-200 text-sm"
                 disabled={loading}
               >
                 {loading ? (
