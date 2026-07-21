@@ -700,14 +700,14 @@ export function CreateLetterModal({ onClose, onSuccess }: CreateLetterModalProps
                 </div>
                 <div className="form-group">
                   <label className="form-label" htmlFor="jumlahLembar">
-                    Jumlah Lembar
+                    Jumlah Lembar (Angka)
                   </label>
                   <input
                     id="jumlahLembar"
                     name="jumlahLembar"
                     type="text"
                     className="form-input"
-                    placeholder="Contoh: 1 Lembar, 2 Berkas..."
+                    placeholder="Contoh: 1, 2, 3..."
                   />
                 </div>
               </div>

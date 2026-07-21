@@ -988,22 +988,22 @@ tbody tr:hover {
   color: var(--text-tertiary);
 }
 
-/* ============================================ */
-/* Tabs                                         */
-/* ============================================ */
+/* Tabs */
 .tabs {
   display: flex;
-  gap: 0;
+  flex-wrap: wrap;
+  gap: 6px;
   border-bottom: 1px solid var(--border-default);
-  margin-bottom: 24px;
+  margin-bottom: 20px;
+  padding-bottom: 10px;
 }
 
 .tab {
-  padding: 10px 16px;
-  background: transparent;
-  border: none;
-  border-bottom: 2px solid transparent;
-  color: var(--text-tertiary);
+  padding: 8px 14px;
+  background: var(--bg-elevated);
+  border: 1px solid var(--border-default);
+  border-radius: var(--radius-md);
+  color: var(--text-secondary);
   font-weight: 500;
   font-size: 13px;
   cursor: pointer;
@@ -1012,20 +1012,31 @@ tbody tr:hover {
   display: flex;
   align-items: center;
   gap: 6px;
+  white-space: nowrap;
 }
 
 .tab:hover {
   color: var(--text-primary);
+  background: var(--bg-subtle);
+  border-color: var(--accent);
 }
 
 .tab.active {
   color: var(--text-primary);
-  border-bottom-color: var(--text-primary);
+  background: var(--bg-subtle);
+  border-color: var(--accent);
+  font-weight: 600;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
 }
 
 .tab svg {
+  color: var(--text-tertiary);
   width: 14px;
   height: 14px;
+}
+
+.tab.active svg {
+  color: var(--accent);
 }
 
 .tab .tab-count {
@@ -1617,12 +1628,13 @@ tbody tr:hover {
     flex-wrap: wrap;
     gap: 4px;
     border-bottom: 1px solid var(--border-default);
+    padding-bottom: 8px;
   }
 
   .tab {
-    padding: 8px 10px;
-    font-size: 12px;
-    border-radius: var(--radius-md) var(--radius-md) 0 0;
+    padding: 6px 10px;
+    font-size: 11.5px;
+    border-radius: var(--radius-md);
   }
 
   /* --- Forms --- */

@@ -411,7 +411,7 @@ export default function LetterDetailPage() {
                   </div>
                   <div className="detail-item">
                     <div className="detail-label">Jumlah Lembar</div>
-                    <div className="detail-value">{letter.jumlahLembar || "—"}</div>
+                    <div className="detail-value">{letter.jumlahLembar ? letter.jumlahLembar.replace(/[^\d]/g, "") || letter.jumlahLembar : "—"}</div>
                   </div>
                   <div className="detail-item">
                     <div className="detail-label">Tembusan</div>

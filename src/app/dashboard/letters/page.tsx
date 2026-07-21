@@ -497,7 +497,7 @@ export default function LettersPage() {
           </div>
         ) : letters.length > 0 ? (
           <>
-            <table>
+            <table style={categoryTab === "SURAT_DINAS_INTERNAL" ? { tableLayout: "fixed", width: "100%" } : { width: "100%" }}>
               {/* ======================================================== */}
               {/* CONDITIONAL TABLE THEAD BY CATEGORY                      */}
               {/* ======================================================== */}
@@ -517,16 +517,14 @@ export default function LettersPage() {
               ) : categoryTab === "SURAT_DINAS_INTERNAL" ? (
                 <thead>
                   <tr>
-                    <th>No. Surat</th>
-                    <th>Hal (Perihal)</th>
-                    <th className="col-hide-mobile">Tipe</th>
-                    <th className="col-hide-mobile">Sifat</th>
-                    <th className="col-hide-mobile">Dari</th>
-                    <th className="col-hide-mobile">Kepada</th>
-                    <th className="col-hide-mobile">Lembar</th>
-                    <th className="col-hide-mobile">Tembusan</th>
-                    <th className="col-hide-mobile">Tanggal</th>
-                    <th>Aksi</th>
+                    <th style={{ width: "160px", minWidth: "130px" }}>No. Surat</th>
+                    <th>Perihal</th>
+                    <th className="col-hide-mobile" style={{ width: "62px" }}>Tipe</th>
+                    <th className="col-hide-mobile" style={{ width: "68px" }}>Sifat</th>
+                    <th className="col-hide-mobile" style={{ width: "150px" }}>Dari → Kepada</th>
+                    <th className="col-hide-mobile" style={{ width: "40px", textAlign: "center" }}>Lbr</th>
+                    <th className="col-hide-mobile" style={{ width: "82px", whiteSpace: "nowrap" }}>Tanggal</th>
+                    <th style={{ width: "82px" }}>Aksi</th>
                   </tr>
                 </thead>
               ) : categoryTab === "KELUAR_MASUK" ? (
@@ -614,32 +612,55 @@ export default function LettersPage() {
                   if (categoryTab === "SURAT_DINAS_INTERNAL") {
                     return (
                       <tr key={letter.id}>
-                        <td><span className="id-cell">{letter.letterNumber}</span></td>
-                        <td>
-                          <span style={{ fontWeight: 500, color: "var(--text-primary)", display: "block", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", maxWidth: "180px" }}>{letter.subject}</span>
-                          <span className="col-show-mobile" style={{ display: "none" }}>
-                            <span className={`type-badge type-${(letter.type || "").toLowerCase()}`} style={{ fontSize: "10px", marginTop: "4px", display: "inline-block" }}>
-                              {letter.type === "MASUK" ? "Masuk" : "Keluar"}
-                            </span>
-                            <span style={{ fontSize: "11px", color: "var(--text-tertiary)", marginLeft: "6px" }}>{formatDate(letter.letterDate)}</span>
-                          </span>
+                        <td style={{ verticalAlign: "top", paddingTop: "10px" }}>
+                          <span className="id-cell" style={{ fontSize: "11.5px", wordBreak: "break-all", lineHeight: 1.4 }}>{letter.letterNumber}</span>
                         </td>
-                        <td className="col-hide-mobile">
+                        <td style={{ verticalAlign: "top", paddingTop: "10px" }}>
+                          <span style={{ fontWeight: 600, color: "var(--text-primary)", display: "block", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }} title={letter.subject}>{letter.subject}</span>
+                          {/* Mobile expanded detail */}
+                          <div className="col-show-mobile" style={{ display: "none", marginTop: "4px" }}>
+                            <div style={{ display: "flex", alignItems: "center", gap: "6px", flexWrap: "wrap", margin: "4px 0" }}>
+                              <span className={`type-badge type-${(letter.type || "").toLowerCase()}`} style={{ fontSize: "10px" }}>
+                                {letter.type === "MASUK" ? "Masuk" : "Keluar"}
+                              </span>
+                              <span className={`classification-badge classification-${(letter.classification || "biasa").toLowerCase()}`} style={{ fontSize: "10px" }}>
+                                {letter.classification}
+                              </span>
+                              {letter.jumlahLembar && (
+                                <span style={{ fontSize: "11px", fontWeight: 600, color: "var(--text-secondary)" }}>
+                                  {letter.jumlahLembar.replace(/[^\d]/g, "") || letter.jumlahLembar} lbr
+                                </span>
+                              )}
+                            </div>
+                            {(letter.sender || letter.recipient) && (
+                              <div style={{ fontSize: "11px", color: "var(--text-secondary)", margin: "2px 0" }}>
+                                <strong>{letter.sender || "—"}</strong> → <strong>{letter.recipient || "—"}</strong>
+                              </div>
+                            )}
+                            <div style={{ fontSize: "11px", color: "var(--text-tertiary)", marginTop: "2px" }}>
+                              {formatDate(letter.letterDate)}{letter.tembusan ? ` • ${letter.tembusan}` : ""}
+                            </div>
+                          </div>
+                        </td>
+                        <td className="col-hide-mobile" style={{ verticalAlign: "top", paddingTop: "10px" }}>
                           <span className={`type-badge type-${(letter.type || "").toLowerCase()}`}>
                             {letter.type === "MASUK" ? "Masuk" : "Keluar"}
                           </span>
                         </td>
-                        <td className="col-hide-mobile">
+                        <td className="col-hide-mobile" style={{ verticalAlign: "top", paddingTop: "10px" }}>
                           <span className={`classification-badge classification-${(letter.classification || "biasa").toLowerCase()}`}>
                             {letter.classification}
                           </span>
                         </td>
-                        <td className="col-hide-mobile">{letter.sender || "—"}</td>
-                        <td className="col-hide-mobile">{letter.recipient || "—"}</td>
-                        <td className="col-hide-mobile">{letter.jumlahLembar || "—"}</td>
-                        <td className="col-hide-mobile" style={{ maxWidth: "150px", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{letter.tembusan || "—"}</td>
-                        <td className="col-hide-mobile" style={{ fontSize: "12px" }}>{formatDate(letter.letterDate)}</td>
-                        <td>
+                        <td className="col-hide-mobile" style={{ maxWidth: "155px", verticalAlign: "top", paddingTop: "10px" }}>
+                          <span style={{ display: "block", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", fontSize: "12px" }} title={letter.sender || ""}>{letter.sender || "—"}</span>
+                          <span style={{ display: "block", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", fontSize: "12px", color: "var(--text-tertiary)" }} title={letter.recipient || ""}> → {letter.recipient || "—"}</span>
+                        </td>
+                        <td className="col-hide-mobile" style={{ textAlign: "center", fontWeight: 700, fontSize: "13px", verticalAlign: "top", paddingTop: "10px" }}>
+                          {letter.jumlahLembar ? letter.jumlahLembar.replace(/[^\d]/g, "") || letter.jumlahLembar : "—"}
+                        </td>
+                        <td className="col-hide-mobile" style={{ fontSize: "12px", whiteSpace: "nowrap", verticalAlign: "top", paddingTop: "10px" }}>{formatDate(letter.letterDate)}</td>
+                        <td style={{ verticalAlign: "top", paddingTop: "8px" }}>
                           <Link href={`/dashboard/letters/${letter.id}`} className="btn btn-secondary btn-sm" style={{ padding: "4px 8px" }}>
                             <Eye size={12} /> Detail
                           </Link>
