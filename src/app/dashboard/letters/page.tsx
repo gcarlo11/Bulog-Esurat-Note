@@ -17,6 +17,8 @@ import {
   Eye,
   FileSpreadsheet,
   FileDown,
+  Download,
+  Paperclip,
   Layers,
 } from "lucide-react";
 
@@ -38,6 +40,11 @@ interface Letter {
   nomorPetunjuk: string | null;
   nominal: number | null;
   paraf: string | null;
+  tembusan: string | null;
+  jumlahLembar: string | null;
+  fileUrl: string | null;
+  fileName: string | null;
+  fileSize: number | null;
   createdBy: { name: string; email: string };
 }
 
@@ -59,6 +66,7 @@ function formatRupiah(value: number) {
 
 const CATEGORIES = [
   { key: "ALL", label: "Semua Dokumen" },
+  { key: "SURAT_DINAS_INTERNAL", label: "Surat Dinas Internal" },
   { key: "NOTA_DIVISI", label: "Nota Internal / Divisi" },
   { key: "NOTA_VERIFIKASI", label: "Nota Verifikasi" },
   { key: "KELUAR_MASUK", label: "Surat Keluar / Masuk" },
@@ -249,12 +257,12 @@ export default function LettersPage() {
   return (
     <div className="page-container">
       {/* Page Header */}
-      <div className="page-header" style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start" }}>
+      <div className="page-header page-header-flex">
         <div>
           <h2>Pencatatan Dokumen</h2>
           <p>Kelola pencatatan arsip surat agenda, surat masuk keluar, dan nota verifikasi secara aman.</p>
         </div>
-        <div style={{ display: "flex", gap: "8px", flexShrink: 0 }}>
+        <div style={{ display: "flex", gap: "8px", flexWrap: "wrap" }}>
           <button
             className="btn btn-secondary btn-sm"
             onClick={() => handleExport("excel")}
@@ -506,6 +514,21 @@ export default function LettersPage() {
                     <th>Aksi</th>
                   </tr>
                 </thead>
+              ) : categoryTab === "SURAT_DINAS_INTERNAL" ? (
+                <thead>
+                  <tr>
+                    <th>No. Surat</th>
+                    <th>Hal (Perihal)</th>
+                    <th className="col-hide-mobile">Tipe</th>
+                    <th className="col-hide-mobile">Sifat</th>
+                    <th className="col-hide-mobile">Dari</th>
+                    <th className="col-hide-mobile">Kepada</th>
+                    <th className="col-hide-mobile">Lembar</th>
+                    <th className="col-hide-mobile">Tembusan</th>
+                    <th className="col-hide-mobile">Tanggal</th>
+                    <th>Aksi</th>
+                  </tr>
+                </thead>
               ) : categoryTab === "KELUAR_MASUK" ? (
                 <thead>
                   <tr>
@@ -579,6 +602,43 @@ export default function LettersPage() {
                             {letter.status === "ACTIVE" ? "Aktif" : "Arsip"}
                           </span>
                         </td>
+                        <td>
+                          <Link href={`/dashboard/letters/${letter.id}`} className="btn btn-secondary btn-sm" style={{ padding: "4px 8px" }}>
+                            <Eye size={12} /> Detail
+                          </Link>
+                        </td>
+                      </tr>
+                    );
+                  }
+
+                  if (categoryTab === "SURAT_DINAS_INTERNAL") {
+                    return (
+                      <tr key={letter.id}>
+                        <td><span className="id-cell">{letter.letterNumber}</span></td>
+                        <td>
+                          <span style={{ fontWeight: 500, color: "var(--text-primary)", display: "block", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", maxWidth: "180px" }}>{letter.subject}</span>
+                          <span className="col-show-mobile" style={{ display: "none" }}>
+                            <span className={`type-badge type-${(letter.type || "").toLowerCase()}`} style={{ fontSize: "10px", marginTop: "4px", display: "inline-block" }}>
+                              {letter.type === "MASUK" ? "Masuk" : "Keluar"}
+                            </span>
+                            <span style={{ fontSize: "11px", color: "var(--text-tertiary)", marginLeft: "6px" }}>{formatDate(letter.letterDate)}</span>
+                          </span>
+                        </td>
+                        <td className="col-hide-mobile">
+                          <span className={`type-badge type-${(letter.type || "").toLowerCase()}`}>
+                            {letter.type === "MASUK" ? "Masuk" : "Keluar"}
+                          </span>
+                        </td>
+                        <td className="col-hide-mobile">
+                          <span className={`classification-badge classification-${(letter.classification || "biasa").toLowerCase()}`}>
+                            {letter.classification}
+                          </span>
+                        </td>
+                        <td className="col-hide-mobile">{letter.sender || "—"}</td>
+                        <td className="col-hide-mobile">{letter.recipient || "—"}</td>
+                        <td className="col-hide-mobile">{letter.jumlahLembar || "—"}</td>
+                        <td className="col-hide-mobile" style={{ maxWidth: "150px", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{letter.tembusan || "—"}</td>
+                        <td className="col-hide-mobile" style={{ fontSize: "12px" }}>{formatDate(letter.letterDate)}</td>
                         <td>
                           <Link href={`/dashboard/letters/${letter.id}`} className="btn btn-secondary btn-sm" style={{ padding: "4px 8px" }}>
                             <Eye size={12} /> Detail

@@ -2,7 +2,8 @@
 
 import { useState } from "react";
 import { createLetterAction } from "@/actions/letters";
-import { X, Save, AlertCircle } from "lucide-react";
+import { formatFileSize } from "@/lib/fileUtils";
+import { X, Save, AlertCircle, Upload, Paperclip } from "lucide-react";
 
 interface CreateLetterModalProps {
   onClose: () => void;
@@ -27,11 +28,19 @@ const agendaTypes = [
 ];
 
 export function CreateLetterModal({ onClose, onSuccess }: CreateLetterModalProps) {
-  const [category, setCategory] = useState<"KELUAR_MASUK" | "AGENDA" | "NOTA_VERIFIKASI" | "NOTA_DIVISI">("KELUAR_MASUK");
+  const [category, setCategory] = useState<"KELUAR_MASUK" | "AGENDA" | "NOTA_VERIFIKASI" | "NOTA_DIVISI" | "SURAT_DINAS_INTERNAL">("KELUAR_MASUK");
   const [letterType, setLetterType] = useState("MASUK");
   const [nominalRaw, setNominalRaw] = useState("");
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
+
+  // SDI Specific state
+  const [sdiNomor, setSdiNomor] = useState("");
+  const [sdiKodeDivisi, setSdiKodeDivisi] = useState("");
+  const [sdiNoTanggal, setSdiNoTanggal] = useState("");
+
+  const [compressedFile, setCompressedFile] = useState<File | null>(null);
+  const [compressionStats, setCompressionStats] = useState<{ original: number; compressed: number } | null>(null);
 
   // Helper formatting Rupiah
   function handleNominalChange(value: string) {
@@ -44,6 +53,69 @@ export function CreateLetterModal({ onClose, onSuccess }: CreateLetterModalProps
     setNominalRaw(formatted);
   }
 
+  // Handle client-side file selection & automatic image compression
+  function handleFileChange(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0];
+    if (!file) {
+      setCompressedFile(null);
+      setCompressionStats(null);
+      return;
+    }
+
+    if (file.type.startsWith("image/")) {
+      const img = new Image();
+      const reader = new FileReader();
+      reader.onload = (event) => {
+        img.src = event.target?.result as string;
+        img.onload = () => {
+          const canvas = document.createElement("canvas");
+          const MAX_DIM = 1600;
+          let width = img.width;
+          let height = img.height;
+
+          if (width > height) {
+            if (width > MAX_DIM) {
+              height = Math.round((height * MAX_DIM) / width);
+              width = MAX_DIM;
+            }
+          } else {
+            if (height > MAX_DIM) {
+              width = Math.round((width * MAX_DIM) / height);
+              height = MAX_DIM;
+            }
+          }
+
+          canvas.width = width;
+          canvas.height = height;
+          const ctx = canvas.getContext("2d");
+          ctx?.drawImage(img, 0, 0, width, height);
+
+          canvas.toBlob(
+            (blob) => {
+              if (blob) {
+                const compFile = new File([blob], file.name.replace(/\.[^/.]+$/, ".webp"), {
+                  type: "image/webp",
+                  lastModified: Date.now(),
+                });
+                setCompressedFile(compFile);
+                setCompressionStats({ original: file.size, compressed: compFile.size });
+              } else {
+                setCompressedFile(file);
+                setCompressionStats({ original: file.size, compressed: file.size });
+              }
+            },
+            "image/webp",
+            0.75
+          );
+        };
+      };
+      reader.readAsDataURL(file);
+    } else {
+      setCompressedFile(file);
+      setCompressionStats({ original: file.size, compressed: file.size });
+    }
+  }
+
   async function handleSubmit(formData: FormData) {
     setLoading(true);
     setError("");
@@ -52,6 +124,10 @@ export function CreateLetterModal({ onClose, onSuccess }: CreateLetterModalProps
     formData.set("category", category);
     if (category === "NOTA_VERIFIKASI" || category === "NOTA_DIVISI") {
       formData.set("nominal", nominalRaw.replace(/\./g, ""));
+    }
+
+    if (compressedFile) {
+      formData.set("attachment", compressedFile);
     }
 
     try {
@@ -107,6 +183,7 @@ export function CreateLetterModal({ onClose, onSuccess }: CreateLetterModalProps
               }}
             >
               <option value="KELUAR_MASUK">Surat Keluar / Masuk</option>
+              <option value="SURAT_DINAS_INTERNAL">Surat Dinas Internal</option>
               <option value="AGENDA">Surat Agenda (14 Jenis)</option>
               <option value="NOTA_VERIFIKASI">Nota Verifikasi Keuangan</option>
               <option value="NOTA_DIVISI">Nota Internal / Divisi</option>
@@ -481,6 +558,175 @@ export function CreateLetterModal({ onClose, onSuccess }: CreateLetterModalProps
             </>
           )}
 
+          {/* ======================================================== */}
+          {/* FORM E: SURAT DINAS INTERNAL                             */}
+          {/* ======================================================== */}
+          {category === "SURAT_DINAS_INTERNAL" && (
+            <>
+              <div className="form-row">
+                <div className="form-group">
+                  <label className="form-label" htmlFor="type">
+                    Tipe Surat *
+                  </label>
+                  <select
+                    id="type"
+                    name="type"
+                    className="form-select"
+                    value={letterType}
+                    onChange={(e) => setLetterType(e.target.value)}
+                    required
+                  >
+                    <option value="MASUK">Surat Masuk</option>
+                    <option value="KELUAR">Surat Keluar</option>
+                  </select>
+                </div>
+                <div className="form-group">
+                  <label className="form-label" htmlFor="classification">
+                    Sifat Surat *
+                  </label>
+                  <select id="classification" name="classification" className="form-select" required>
+                    <option value="BIASA">Biasa</option>
+                    <option value="PENTING">Penting</option>
+                    <option value="RAHASIA">Rahasia</option>
+                  </select>
+                </div>
+              </div>
+
+              {/* Format Nomor Surat Manual SDI */}
+              <div className="form-group" style={{ background: "var(--bg-subtle)", padding: "12px", borderRadius: "var(--radius-md)", border: "1px solid var(--border-default)", marginBottom: "16px" }}>
+                <label className="form-label" style={{ fontWeight: 600, marginBottom: "8px" }}>
+                  Format Nomor Surat: <code style={{ color: "var(--accent-text)", fontSize: "12px" }}>SDI-[Nomor]/06040/[Kode Divisi]/[Nomor Tanggal]</code>
+                </label>
+
+                <div className="sdi-number-grid">
+                  <div>
+                    <span style={{ fontSize: "11px", color: "var(--text-tertiary)", display: "block", marginBottom: "4px" }}>Input Nomor *</span>
+                    <input
+                      type="text"
+                      name="sdiNomor"
+                      className="form-input"
+                      placeholder="001"
+                      value={sdiNomor}
+                      onChange={(e) => setSdiNomor(e.target.value)}
+                      required
+                    />
+                  </div>
+                  <div>
+                    <span style={{ fontSize: "11px", color: "var(--text-tertiary)", display: "block", marginBottom: "4px" }}>Kode Divisi *</span>
+                    <input
+                      type="text"
+                      name="sdiKodeDivisi"
+                      className="form-input"
+                      placeholder="HUB / VER..."
+                      value={sdiKodeDivisi}
+                      onChange={(e) => setSdiKodeDivisi(e.target.value)}
+                      required
+                    />
+                  </div>
+                  <div>
+                    <span style={{ fontSize: "11px", color: "var(--text-tertiary)", display: "block", marginBottom: "4px" }}>Nomor Tanggal *</span>
+                    <input
+                      type="text"
+                      name="sdiNoTanggal"
+                      className="form-input"
+                      placeholder="21/07/2026..."
+                      value={sdiNoTanggal}
+                      onChange={(e) => setSdiNoTanggal(e.target.value)}
+                      required
+                    />
+                  </div>
+                </div>
+
+                <div style={{ fontSize: "12px", marginTop: "8px", color: "var(--text-secondary)", fontWeight: 500 }}>
+                  Preview Nomor: <span style={{ fontFamily: "var(--font-mono)", fontWeight: 700, color: "var(--text-primary)" }}>SDI-{sdiNomor || "001"}/06040/{sdiKodeDivisi || "DIV"}/{sdiNoTanggal || "01"}</span>
+                </div>
+              </div>
+
+              <div className="form-group">
+                <label className="form-label" htmlFor="subject">
+                  Hal (Perihal) *
+                </label>
+                <input
+                  id="subject"
+                  name="subject"
+                  type="text"
+                  className="form-input"
+                  placeholder="Hal / perihal surat dinas internal..."
+                  required
+                />
+              </div>
+
+              <div className="form-row">
+                <div className="form-group">
+                  <label className="form-label" htmlFor="sender">
+                    Dari (Pengirim) *
+                  </label>
+                  <input
+                    id="sender"
+                    name="sender"
+                    type="text"
+                    className="form-input"
+                    placeholder="Pengirim / Unit asal..."
+                    required
+                  />
+                </div>
+                <div className="form-group">
+                  <label className="form-label" htmlFor="recipient">
+                    Kepada (Penerima) *
+                  </label>
+                  <input
+                    id="recipient"
+                    name="recipient"
+                    type="text"
+                    className="form-input"
+                    placeholder="Penerima / Unit tujuan..."
+                    required
+                  />
+                </div>
+              </div>
+
+              <div className="form-row">
+                <div className="form-group">
+                  <label className="form-label" htmlFor="letterDate">
+                    Tanggal Surat *
+                  </label>
+                  <input
+                    id="letterDate"
+                    name="letterDate"
+                    type="date"
+                    className="form-input"
+                    required
+                  />
+                </div>
+                <div className="form-group">
+                  <label className="form-label" htmlFor="jumlahLembar">
+                    Jumlah Lembar
+                  </label>
+                  <input
+                    id="jumlahLembar"
+                    name="jumlahLembar"
+                    type="text"
+                    className="form-input"
+                    placeholder="Contoh: 1 Lembar, 2 Berkas..."
+                  />
+                </div>
+              </div>
+
+              <div className="form-group">
+                <label className="form-label" htmlFor="tembusan">
+                  Tembusan
+                </label>
+                <input
+                  id="tembusan"
+                  name="tembusan"
+                  type="text"
+                  className="form-input"
+                  placeholder="Tembusan surat (opsional)..."
+                />
+              </div>
+            </>
+          )}
+
           <div className="form-group" style={{ marginTop: "12px" }}>
             <label className="form-label" htmlFor="description">
               Keterangan / Catatan Tambahan
@@ -492,6 +738,31 @@ export function CreateLetterModal({ onClose, onSuccess }: CreateLetterModalProps
               placeholder="Masukkan catatan pendukung (opsional)..."
               rows={2}
             />
+          </div>
+
+          <div className="form-group" style={{ marginTop: "12px" }}>
+            <label className="form-label" htmlFor="attachment" style={{ display: "flex", alignItems: "center", gap: "6px" }}>
+              <Paperclip size={13} style={{ color: "var(--accent-text)" }} />
+              Upload File Backup (Opsional, Terkompresi Otomatis)
+            </label>
+            <input
+              id="attachment"
+              type="file"
+              className="form-input"
+              accept="image/*,.pdf,.doc,.docx,.xls,.xlsx,.zip"
+              onChange={handleFileChange}
+              style={{ padding: "6px 10px" }}
+            />
+            {compressionStats && (
+              <div style={{ fontSize: "11px", color: "var(--status-success)", marginTop: "6px", fontWeight: 500, display: "flex", alignItems: "center", gap: "4px" }}>
+                ✓ File siap diunggah: <strong>{formatFileSize(compressionStats.compressed)}</strong>
+                {compressionStats.original > compressionStats.compressed && (
+                  <span style={{ color: "var(--text-tertiary)", fontWeight: 400 }}>
+                    (Hemat {Math.round((1 - compressionStats.compressed / compressionStats.original) * 100)}% dari {formatFileSize(compressionStats.original)})
+                  </span>
+                )}
+              </div>
+            )}
           </div>
 
           <div className="modal-actions" style={{ marginTop: "24px" }}>

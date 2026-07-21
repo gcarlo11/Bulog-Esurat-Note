@@ -54,6 +54,13 @@ model Letter {
   nomorPetunjuk   String?  // Nomor Petunjuk
   nominal         Float?   // Nominal (untuk Nota Verifikasi)
   paraf           String?  // Paraf / Tanda tangan persetujuan
+  tembusan        String?  // Tembusan (untuk Surat Dinas Internal)
+  jumlahLembar    String?  // Jumlah Lembar (untuk Surat Dinas Internal)
+
+  // File Backup Terkompresi (Opsional)
+  fileUrl         String?  // URL / Path file terkompresi
+  fileName        String?  // Nama file asli
+  fileSize        Int?     // Ukuran file terkompresi (bytes)
 
   // Relasi
   createdById     String
@@ -96,6 +103,11 @@ model LetterVersion {
   nomorPetunjuk   String?
   nominal         Float?
   paraf           String?
+  tembusan        String?
+  jumlahLembar    String?
+  fileUrl         String?
+  fileName        String?
+  fileSize        Int?
 
   createdAt     DateTime @default(now())
 }

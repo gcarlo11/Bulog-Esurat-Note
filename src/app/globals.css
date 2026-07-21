@@ -345,7 +345,7 @@
   border: 1px solid var(--border-default);
   border-radius: var(--radius-lg);
   overflow: hidden;
-  margin-bottom: 32px;
+  margin-bottom: 24px;
 }
 
 .stat-card {
@@ -353,6 +353,13 @@
   padding: 20px 24px;
   transition: background-color 0.2s ease;
 }
+
+/* Utility: hide/show columns on mobile */
+.col-hide-mobile { }
+.col-show-mobile { display: none; }
+
+/* Utility: btn label (text that can be hidden on very small screens) */
+.btn-label { }
 
 .stat-card:hover {
   background: var(--bg-subtle);
@@ -411,6 +418,12 @@
   overflow: hidden;
   background: var(--bg-elevated);
   transition: background-color 0.2s ease, border-color 0.2s ease;
+}
+
+.id-cell {
+  font-weight: 600;
+  color: var(--text-primary);
+  word-break: break-all;
 }
 
 table {
@@ -1346,30 +1359,471 @@ tbody tr:hover {
 }
 
 /* ============================================ */
-/* Responsive                                   */
+/* Layout Helper Classes                        */
+/* ============================================ */
+.page-header-flex {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+
+.dashboard-content-grid {
+  display: grid;
+  grid-template-columns: 1.6fr 1fr;
+  gap: 24px;
+  align-items: start;
+}
+
+.letter-detail-grid {
+  display: grid;
+  grid-template-columns: 1.8fr 1fr;
+  gap: 24px;
+  align-items: start;
+}
+
+/* ============================================ */
+/* Mobile Header & Responsive Drawer             */
+/* ============================================ */
+.mobile-header {
+  display: none;
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 56px;
+  background: var(--sidebar-bg);
+  border-bottom: 1px solid var(--sidebar-border);
+  padding: 0 16px;
+  align-items: center;
+  justify-content: space-between;
+  z-index: 45;
+}
+
+.mobile-menu-btn {
+  background: transparent;
+  border: none;
+  color: var(--text-primary);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  border-radius: var(--radius-md);
+  cursor: pointer;
+  flex-shrink: 0;
+  transition: background 0.15s ease;
+}
+
+.mobile-menu-btn:hover {
+  background: var(--sidebar-item-hover);
+}
+
+.mobile-brand {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: var(--text-primary);
+  flex: 1;
+  justify-content: center;
+}
+
+.mobile-overlay {
+  display: none;
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.5);
+  backdrop-filter: blur(2px);
+  z-index: 48;
+  animation: fadeIn 0.2s ease;
+}
+
+/* ============================================ */
+/* Responsive — Tablet (≤ 960px)               */
+/* ============================================ */
+@media (max-width: 960px) {
+  .dashboard-content-grid,
+  .letter-detail-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* ============================================ */
+/* Responsive — Mobile (≤ 768px)               */
 /* ============================================ */
 @media (max-width: 768px) {
-  .sidebar {
-    transform: translateX(-100%);
+
+  /* --- Mobile Drawer Toggle --- */
+  .mobile-header {
+    display: flex;
   }
 
+  .mobile-overlay {
+    display: block;
+  }
+
+  .app-layout {
+    flex-direction: column;
+  }
+
+  /* Sidebar becomes a slide-in drawer */
+  .sidebar {
+    position: fixed;
+    top: 0;
+    left: 0;
+    bottom: 0;
+    height: 100vh;
+    z-index: 50;
+    transform: translateX(-100%);
+    transition: transform 0.28s cubic-bezier(0.4, 0, 0.2, 1),
+                box-shadow 0.28s ease;
+    box-shadow: none;
+  }
+
+  .sidebar.mobile-open {
+    transform: translateX(0);
+    box-shadow: 8px 0 48px rgba(0, 0, 0, 0.18);
+  }
+
+  /* Content shifts down for the fixed mobile header */
   .main-content {
     margin-left: 0;
+    padding-top: 56px;
+    width: 100%;
   }
 
+  /* --- Page Container --- */
   .page-container {
-    padding: 20px 16px;
+    padding: 16px 14px 32px;
+    max-width: 100%;
   }
 
+  /* --- Page Header --- */
+  .page-header {
+    margin-bottom: 16px;
+  }
+
+  .page-header h2 {
+    font-size: 18px;
+  }
+
+  .page-header p {
+    font-size: 13px;
+  }
+
+  /* Dashboard header: keep in one row, just shrink text */
+  .page-header.dashboard-header {
+    flex-direction: row;
+    align-items: center;
+  }
+
+  /* page-header-flex: letter list, etc. can stack */
+  .page-header-flex {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 12px;
+  }
+
+  .page-header-flex > div:last-child {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+
+  /* --- Stats Grid --- */
+  /* 2x2 layout using the 1px background trick (preserves dividers) */
   .stats-grid {
-    grid-template-columns: 1fr 1fr;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 1px;
+    margin-bottom: 16px;
   }
 
+  .stat-card {
+    padding: 14px 16px;
+  }
+
+  .stat-value {
+    font-size: 22px;
+  }
+
+  /* --- Filter bar: stack vertically on mobile --- */
+  .dashboard-filters-bar {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 8px;
+    margin-bottom: 14px;
+  }
+
+  .dashboard-filters-bar > div {
+    width: 100%;
+  }
+
+  .dashboard-filters-bar .filter-select {
+    width: 100%;
+    box-sizing: border-box;
+  }
+
+  .filter-date-row {
+    display: flex;
+    gap: 6px;
+    width: 100%;
+  }
+
+  .filter-date-row .filter-select {
+    flex: 1;
+  }
+
+  /* --- Table Toolbar: keep side by side --- */
+  .table-toolbar {
+    flex-direction: row;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+  }
+
+  .table-toolbar-actions {
+    flex-wrap: wrap;
+    gap: 6px;
+  }
+
+  /* --- Hide/show table columns on mobile --- */
+  .col-hide-mobile {
+    display: none !important;
+  }
+
+  .col-show-mobile {
+    display: block !important;
+  }
+
+  /* --- Search Input --- */
+  .search-input {
+    width: 100%;
+  }
+
+  .search-wrapper {
+    width: 100%;
+  }
+
+  /* --- Scrollable Tables --- */
+  .table-wrapper {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    border-radius: var(--radius-lg);
+  }
+
+  /* --- Tabs: Wrap naturally on mobile without horizontal scrolling --- */
+  .tabs {
+    flex-wrap: wrap;
+    gap: 4px;
+    border-bottom: 1px solid var(--border-default);
+  }
+
+  .tab {
+    padding: 8px 10px;
+    font-size: 12px;
+    border-radius: var(--radius-md) var(--radius-md) 0 0;
+  }
+
+  /* --- Forms --- */
   .form-row {
-    grid-template-columns: 1fr;
+    display: flex;
+    flex-direction: column;
+    gap: 0;
   }
 
+  .form-group {
+    margin-bottom: 14px;
+  }
+
+  /* --- Detail Grid --- */
   .detail-grid {
     grid-template-columns: 1fr;
+  }
+
+  .detail-item {
+    padding: 12px 0;
+  }
+
+  /* --- Modal --- */
+  .modal-overlay {
+    padding: 0;
+    align-items: flex-end;
+  }
+
+  .modal {
+    width: 100%;
+    max-width: 100%;
+    max-height: 92vh;
+    border-radius: var(--radius-xl) var(--radius-xl) 0 0;
+    padding: 20px 16px;
+    margin: 0;
+  }
+
+  /* Drag indicator bar for bottom sheet feel */
+  .modal::before {
+    content: '';
+    display: block;
+    width: 36px;
+    height: 4px;
+    background: var(--border-default);
+    border-radius: 2px;
+    margin: -8px auto 16px;
+  }
+
+  .modal-header {
+    margin-bottom: 16px;
+  }
+
+  .modal-actions {
+    flex-direction: column-reverse;
+    gap: 8px;
+    padding-top: 12px;
+  }
+
+  .modal-actions .btn {
+    width: 100%;
+    justify-content: center;
+    padding: 10px 16px;
+    font-size: 13px;
+  }
+
+  /* --- Letter Header (detail page) --- */
+  .letter-header-row {
+    flex-direction: column;
+    gap: 12px;
+    align-items: stretch;
+  }
+
+  .letter-header-row > div:last-child {
+    display: flex;
+    gap: 8px;
+  }
+
+  .letter-header-row > div:last-child .btn {
+    flex: 1;
+    justify-content: center;
+  }
+
+  /* --- Pagination --- */
+  .pagination {
+    flex-direction: column;
+    gap: 10px;
+    align-items: center;
+    text-align: center;
+    padding: 12px;
+  }
+
+  /* --- Filter Bar --- */
+  .filter-bar {
+    flex-wrap: wrap;
+    gap: 6px;
+  }
+
+  .filter-select {
+    font-size: 12px;
+    padding: 6px 28px 6px 8px;
+  }
+
+  /* --- Audit log table --- */
+  td, th {
+    padding: 10px 12px;
+  }
+
+  /* --- Dashboard layout stacks on mobile --- */
+  .dashboard-content-grid,
+  .letter-detail-grid {
+    grid-template-columns: 1fr;
+    gap: 16px;
+  }
+
+  /* --- Version card sizing --- */
+  .version-card {
+    padding: 12px 14px;
+  }
+
+  /* --- Card/Panel padding adjustment --- */
+  .card {
+    padding: 16px !important;
+  }
+
+  /* --- Empty state --- */
+  .empty-state {
+    padding: 32px 16px;
+  }
+
+  /* --- btn full-width on tiny screens in toolbars --- */
+  .btn-sm {
+    font-size: 12px;
+    padding: 6px 10px;
+  }
+}
+
+/* ============================================ */
+/* Responsive — Small Mobile (≤ 480px)         */
+/* ============================================ */
+@media (max-width: 480px) {
+  .page-container {
+    padding: 12px 10px 28px;
+  }
+
+  .page-header h2 {
+    font-size: 17px;
+  }
+
+  /* Date filter rows wrap on very small screens */
+  .filter-date-row {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 4px;
+  }
+
+  .filter-date-row > div {
+    width: 100%;
+  }
+
+  .filter-date-row .filter-select {
+    flex: unset;
+    width: 100%;
+  }
+
+  .tabs {
+    margin-left: -10px;
+    margin-right: -10px;
+    padding: 0 10px;
+  }
+
+  .modal-overlay {
+    align-items: flex-end;
+  }
+
+  .modal {
+    max-height: 94vh;
+  }
+}
+
+/* ============================================ */
+/* Surat Dinas Internal Helper Classes           */
+/* ============================================ */
+.sdi-number-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 8px;
+}
+
+.letter-number-title {
+  word-break: break-word;
+  overflow-wrap: anywhere;
+  font-size: 20px;
+}
+
+@media (max-width: 600px) {
+  .sdi-number-grid {
+    grid-template-columns: 1fr;
+    gap: 8px;
+  }
+
+  .letter-number-title {
+    font-size: 17px;
   }
 }

@@ -1,5 +1,6 @@
 "use client";
 
+import { useState } from "react";
 import Link from "next/link";
 import { usePathname, useSearchParams } from "next/navigation";
 import { logoutAction } from "@/actions/auth";
@@ -14,6 +15,8 @@ import {
   LogOut,
   Inbox,
   FileText,
+  Menu,
+  X,
 } from "lucide-react";
 
 interface SidebarProps {
@@ -37,6 +40,7 @@ const navGroups = [
     items: [
       { name: "Surat Agenda", href: "/dashboard/letters?category=AGENDA", icon: BookOpen },
       { name: "Surat Keluar / Masuk", href: "/dashboard/letters?category=KELUAR_MASUK", icon: Mail },
+      { name: "Surat Dinas Internal", href: "/dashboard/letters?category=SURAT_DINAS_INTERNAL", icon: FileText },
       { name: "Nota Verifikasi", href: "/dashboard/letters?category=NOTA_VERIFIKASI", icon: FileCheck },
       { name: "Nota Internal / Divisi", href: "/dashboard/letters?category=NOTA_DIVISI", icon: FileText },
       { name: "Semua Dokumen", href: "/dashboard/letters", icon: Layers },
@@ -55,6 +59,7 @@ export function Sidebar({ user }: SidebarProps) {
   const pathname = usePathname();
   const searchParams = useSearchParams();
   const currentCategory = searchParams.get("category") || "ALL";
+  const [isMobileOpen, setIsMobileOpen] = useState(false);
 
   const groups = user.role === "ADMIN" ? [...navGroups, adminGroup] : navGroups;
 
@@ -78,66 +83,97 @@ export function Sidebar({ user }: SidebarProps) {
   }
 
   return (
-    <aside className="sidebar">
-      {/* Brand */}
-      <div className="sidebar-brand">
-        <div className="sidebar-brand-icon">
-          <Inbox size={16} strokeWidth={2.5} />
-        </div>
-        <h1>SISTEM E-SURAT</h1>
-      </div>
-
-      {/* Navigation */}
-      <nav style={{ flex: 1 }}>
-        {groups.map((group) => (
-          <div key={group.label} className="nav-section">
-            <div className="nav-label">{group.label}</div>
-            {group.items.map((item) => {
-              const Icon = item.icon;
-              return (
-                <Link
-                  key={item.name}
-                  href={item.href}
-                  className={`nav-link ${isActive(item.href) ? "active" : ""}`}
-                >
-                  <Icon size={16} strokeWidth={1.8} />
-                  {item.name}
-                </Link>
-              );
-            })}
-          </div>
-        ))}
-      </nav>
-
-      {/* Footer */}
-      <div className="sidebar-footer">
-        <div
-          style={{
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "space-between",
-            padding: "0 12px",
-            marginBottom: 12,
-          }}
+    <>
+      {/* Mobile Top Header Bar */}
+      <div className="mobile-header">
+        <button
+          className="mobile-menu-btn"
+          onClick={() => setIsMobileOpen(!isMobileOpen)}
+          aria-label="Buka menu navigasi"
         >
-          <ThemeSwitcher />
-          <form action={logoutAction}>
-            <button type="submit" className="btn btn-ghost btn-sm">
-              <LogOut size={14} strokeWidth={1.8} />
-              Keluar
-            </button>
-          </form>
-        </div>
-        <div className="sidebar-user">
-          <div className="sidebar-avatar">
-            {user.name.charAt(0).toUpperCase()}
+          {isMobileOpen ? <X size={20} /> : <Menu size={20} />}
+        </button>
+        <div className="mobile-brand">
+          <div className="sidebar-brand-icon" style={{ width: 24, height: 24, borderRadius: 5 }}>
+            <Inbox size={14} strokeWidth={2.5} />
           </div>
-          <div className="sidebar-user-info">
-            <p>{user.name}</p>
-            <span>{user.role}</span>
-          </div>
+          <span style={{ fontWeight: 800, fontSize: 13, letterSpacing: "-0.01em" }}>SISTEM E-SURAT</span>
         </div>
+        <ThemeSwitcher />
       </div>
-    </aside>
+
+      {/* Backdrop overlay when sidebar is open on mobile */}
+      {isMobileOpen && (
+        <div
+          className="mobile-overlay"
+          onClick={() => setIsMobileOpen(false)}
+          aria-hidden="true"
+        />
+      )}
+
+      {/* Main Sidebar Drawer */}
+      <aside className={`sidebar ${isMobileOpen ? "mobile-open" : ""}`}>
+        {/* Brand */}
+        <div className="sidebar-brand">
+          <div className="sidebar-brand-icon">
+            <Inbox size={16} strokeWidth={2.5} />
+          </div>
+          <h1>SISTEM E-SURAT</h1>
+        </div>
+
+        {/* Navigation */}
+        <nav style={{ flex: 1 }}>
+          {groups.map((group) => (
+            <div key={group.label} className="nav-section">
+              <div className="nav-label">{group.label}</div>
+              {group.items.map((item) => {
+                const Icon = item.icon;
+                return (
+                  <Link
+                    key={item.name}
+                    href={item.href}
+                    onClick={() => setIsMobileOpen(false)}
+                    className={`nav-link ${isActive(item.href) ? "active" : ""}`}
+                  >
+                    <Icon size={16} strokeWidth={1.8} />
+                    {item.name}
+                  </Link>
+                );
+              })}
+            </div>
+          ))}
+        </nav>
+
+        {/* Footer */}
+        <div className="sidebar-footer">
+          <div
+            style={{
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "space-between",
+              padding: "0 12px",
+              marginBottom: 12,
+            }}
+          >
+            <ThemeSwitcher />
+            <form action={logoutAction}>
+              <button type="submit" className="btn btn-ghost btn-sm">
+                <LogOut size={14} strokeWidth={1.8} />
+                Keluar
+              </button>
+            </form>
+          </div>
+          <div className="sidebar-user">
+            <div className="sidebar-avatar">
+              {user.name.charAt(0).toUpperCase()}
+            </div>
+            <div className="sidebar-user-info">
+              <p>{user.name}</p>
+              <span>{user.role}</span>
+            </div>
+          </div>
+        </div>
+      </aside>
+    </>
   );
 }

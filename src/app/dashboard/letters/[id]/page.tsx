@@ -21,7 +21,10 @@ import {
   X,
   XCircle,
   Key,
+  Download,
+  Paperclip,
 } from "lucide-react";
+import { formatFileSize } from "@/lib/fileUtils";
 
 interface LetterVersion {
   id: string;
@@ -42,6 +45,11 @@ interface LetterVersion {
   nomorPetunjuk: string | null;
   nominal: number | null;
   paraf: string | null;
+  tembusan: string | null;
+  jumlahLembar: string | null;
+  fileUrl: string | null;
+  fileName: string | null;
+  fileSize: number | null;
 }
 
 interface AuditLogEntry {
@@ -75,6 +83,11 @@ interface LetterDetail {
   nomorPetunjuk: string | null;
   nominal: number | null;
   paraf: string | null;
+  tembusan: string | null;
+  jumlahLembar: string | null;
+  fileUrl: string | null;
+  fileName: string | null;
+  fileSize: number | null;
   createdBy: { name: string; email: string };
   versions: LetterVersion[];
   auditLogs: AuditLogEntry[];
@@ -255,7 +268,7 @@ export default function LetterDetailPage() {
   return (
     <div className="page-container">
       {/* Header */}
-      <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: "24px", flexWrap: "wrap", gap: "16px" }}>
+      <div className="page-header letter-header-row" style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: "24px", gap: "16px" }}>
         <div>
           <div style={{ display: "flex", alignItems: "center", gap: "6px", marginBottom: "8px" }}>
             <Link href="/dashboard/letters" className="text-link" style={{ fontSize: "13px", display: "flex", alignItems: "center", gap: "4px" }}>
@@ -263,13 +276,13 @@ export default function LetterDetailPage() {
               Kembali ke Daftar
             </Link>
           </div>
-          <h2>{letter.letterNumber}</h2>
-          <div style={{ display: "flex", gap: "6px", marginTop: "8px" }}>
+          <h2 className="letter-number-title">{letter.letterNumber}</h2>
+          <div style={{ display: "flex", gap: "6px", marginTop: "8px", flexWrap: "wrap" }}>
             <span style={{ fontSize: "11px", fontWeight: 600, textTransform: "uppercase", color: "var(--text-secondary)", background: "var(--bg-muted)", padding: "2px 8px", borderRadius: "4px" }}>
-              {letter.category.replace("_", " ")}
+              {letter.category.replaceAll("_", " ")}
             </span>
-            {letter.category === "KELUAR_MASUK" && (
-              <span className={`type-badge type-${(letter.type || "").toLowerCase()}`}>
+            {(letter.category === "KELUAR_MASUK" || letter.category === "SURAT_DINAS_INTERNAL") && letter.type && (
+              <span className={`type-badge type-${letter.type.toLowerCase()}`}>
                 {letter.type === "MASUK" ? "Masuk" : "Keluar"}
               </span>
             )}
@@ -280,7 +293,7 @@ export default function LetterDetailPage() {
           </div>
         </div>
         {letter.status === "ACTIVE" && (
-          <div style={{ display: "flex", gap: "8px" }}>
+          <div style={{ display: "flex", gap: "8px", flexShrink: 0 }}>
             {canEdit(user.role) && (
               <button className="btn btn-secondary" onClick={() => setShowEdit(!showEdit)}>
                 <Edit2 size={14} />
@@ -342,7 +355,7 @@ export default function LetterDetailPage() {
 
       {/* Tab Content: Detail */}
       {activeTab === "detail" && (
-        <div style={{ display: "grid", gridTemplateColumns: "1.8fr 1fr", gap: "24px", alignItems: "start" }}>
+        <div className="letter-detail-grid">
           {/* Main Info */}
           <div className="card" style={{ padding: "24px", background: "var(--bg-elevated)", border: "1px solid var(--border-default)", borderRadius: "var(--radius-lg)" }}>
             <div className="detail-grid">
@@ -369,6 +382,40 @@ export default function LetterDetailPage() {
                   <div className="detail-item">
                     <div className="detail-label">Tanggal Agenda</div>
                     <div className="detail-value">{formatDate(letter.letterDate)}</div>
+                  </div>
+                </>
+              )}
+
+              {/* SPECIFIC FIELDS: SURAT DINAS INTERNAL */}
+              {letter.category === "SURAT_DINAS_INTERNAL" && (
+                <>
+                  <div className="detail-item">
+                    <div className="detail-label">Sifat Surat</div>
+                    <div className="detail-value">
+                      <span className={`classification-badge classification-${(letter.classification || "biasa").toLowerCase()}`}>
+                        {letter.classification}
+                      </span>
+                    </div>
+                  </div>
+                  <div className="detail-item">
+                    <div className="detail-label">Tanggal Surat</div>
+                    <div className="detail-value">{formatDate(letter.letterDate)}</div>
+                  </div>
+                  <div className="detail-item">
+                    <div className="detail-label">Dari (Pengirim)</div>
+                    <div className="detail-value">{letter.sender || "—"}</div>
+                  </div>
+                  <div className="detail-item">
+                    <div className="detail-label">Kepada (Penerima)</div>
+                    <div className="detail-value">{letter.recipient || "—"}</div>
+                  </div>
+                  <div className="detail-item">
+                    <div className="detail-label">Jumlah Lembar</div>
+                    <div className="detail-value">{letter.jumlahLembar || "—"}</div>
+                  </div>
+                  <div className="detail-item">
+                    <div className="detail-label">Tembusan</div>
+                    <div className="detail-value">{letter.tembusan || "—"}</div>
                   </div>
                 </>
               )}
@@ -466,6 +513,39 @@ export default function LetterDetailPage() {
                 <div className="detail-label">Keterangan / Catatan Tambahan</div>
                 <div className="detail-value" style={{ lineHeight: 1.6, fontSize: "13px" }}>
                   {letter.description}
+                </div>
+              </div>
+            )}
+
+            {letter.fileUrl && (
+              <div style={{ marginTop: "20px", paddingTop: "16px", borderTop: "1px solid var(--border-default)" }}>
+                <div className="detail-label" style={{ display: "flex", alignItems: "center", gap: "6px", marginBottom: "8px" }}>
+                  <Paperclip size={13} style={{ color: "var(--accent-text)" }} />
+                  File Backup / Lampiran Surat
+                </div>
+                <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: "12px", background: "var(--bg-subtle)", padding: "12px 16px", borderRadius: "var(--radius-md)", border: "1px solid var(--border-default)" }}>
+                  <div style={{ display: "flex", alignItems: "center", gap: "12px", overflow: "hidden" }}>
+                    <FileText size={20} style={{ color: "var(--accent-text)", flexShrink: 0 }} />
+                    <div style={{ minWidth: 0 }}>
+                      <div style={{ fontSize: "13px", fontWeight: 600, color: "var(--text-primary)", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                        {letter.fileName || "File Backup"}
+                      </div>
+                      <div style={{ fontSize: "11px", color: "var(--text-tertiary)", marginTop: "2px" }}>
+                        Ukuran: {formatFileSize(letter.fileSize)}
+                      </div>
+                    </div>
+                  </div>
+                  <a
+                    href={letter.fileUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    download={letter.fileName || true}
+                    className="btn btn-secondary btn-sm"
+                    style={{ flexShrink: 0, textDecoration: "none", display: "flex", alignItems: "center", gap: "6px" }}
+                  >
+                    <Download size={13} />
+                    Download
+                  </a>
                 </div>
               </div>
             )}

@@ -100,13 +100,13 @@ export default function AuditLogsPage() {
 
       <div className="table-wrapper" style={{ border: "1px solid var(--border-default)" }}>
         <div style={{ display: "flex", flexWrap: "wrap", alignItems: "center", justifyContent: "space-between", padding: "12px 16px", borderBottom: "1px solid var(--border-default)", gap: "12px" }}>
-          <div style={{ display: "flex", gap: "12px", alignItems: "center", flexWrap: "wrap" }}>
+          <div style={{ display: "flex", gap: "12px", alignItems: "center", flexWrap: "wrap", width: "100%" }}>
             <div style={{ fontSize: "13px", fontWeight: 600, color: "var(--text-primary)" }}>
               Log Aktivitas Keamanan
             </div>
             
             {/* Date Filters */}
-            <div style={{ display: "flex", gap: "6px", alignItems: "center", flexWrap: "wrap" }}>
+            <div className="filter-bar" style={{ display: "flex", gap: "6px", alignItems: "center" }}>
               <div style={{ display: "flex", alignItems: "center", gap: "4px" }}>
                 <span style={{ fontSize: "11px", color: "var(--text-secondary)" }}>Dari:</span>
                 <input

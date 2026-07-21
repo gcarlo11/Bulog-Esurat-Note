@@ -54,15 +54,15 @@ export default async function DashboardPage({
   return (
     <div className="page-container">
       {/* Page Header */}
-      <div className="page-header" style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+      <div className="page-header" style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: "20px" }}>
         <div>
           <h2>Ringkasan Dokumen</h2>
           <p>Pantau arus masuk dan keluar surat secara real-time dan aman.</p>
         </div>
         {(user?.role === "ADMIN" || user?.role === "STAFF") && (
-          <Link href="/dashboard/letters?create=true" className="btn btn-primary btn-sm">
+          <Link href="/dashboard/letters?create=true" className="btn btn-primary btn-sm" style={{ flexShrink: 0 }}>
             <Plus size={14} />
-            Registrasi Baru
+            <span className="btn-label">Registrasi Baru</span>
           </Link>
         )}
       </div>
@@ -103,7 +103,7 @@ export default async function DashboardPage({
       </div>
 
       {/* Content Layout */}
-      <div style={{ display: "grid", gridTemplateColumns: "1.6fr 1fr", gap: "24px", alignItems: "start" }}>
+      <div className="dashboard-content-grid">
         {/* Left: Scannable Data Table */}
         <div className="table-section">
           <div className="table-toolbar">
@@ -121,8 +121,8 @@ export default async function DashboardPage({
                   <tr>
                     <th>No. Surat / Hash</th>
                     <th>Perihal</th>
-                    <th>Tipe</th>
-                    <th>Tanggal</th>
+                    <th className="col-hide-mobile">Tipe</th>
+                    <th className="col-hide-mobile">Tanggal</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -149,15 +149,22 @@ export default async function DashboardPage({
                             SHA256: {shortHash}
                           </div>
                         </td>
-                        <td style={{ maxWidth: "200px", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
-                          <span style={{ fontWeight: 500, color: "var(--text-primary)" }}>{letter.subject}</span>
-                        </td>
                         <td>
+                          <span style={{ fontWeight: 500, color: "var(--text-primary)", display: "block", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", maxWidth: "180px" }}>{letter.subject}</span>
+                          {/* On mobile, show type badge inline below subject */}
+                          <span className="col-show-mobile" style={{ display: "none" }}>
+                            <span className={`type-badge type-${(letter.type ?? letter.category).toLowerCase()}`} style={{ fontSize: "10px", marginTop: "4px", display: "inline-block" }}>
+                              {letter.type === "MASUK" ? "Masuk" : letter.type === "KELUAR" ? "Keluar" : letter.category.replace("_", " ")}
+                            </span>
+                            <span style={{ fontSize: "11px", color: "var(--text-tertiary)", marginLeft: "6px" }}>{formatDate(letter.letterDate)}</span>
+                          </span>
+                        </td>
+                        <td className="col-hide-mobile">
                           <span className={`type-badge type-${(letter.type ?? letter.category).toLowerCase()}`}>
                             {letter.type === "MASUK" ? "Masuk" : letter.type === "KELUAR" ? "Keluar" : letter.category.replace("_", " ")}
                           </span>
                         </td>
-                        <td>
+                        <td className="col-hide-mobile">
                           <span style={{ fontSize: "12px" }}>{formatDate(letter.letterDate)}</span>
                         </td>
                       </tr>
@@ -176,8 +183,8 @@ export default async function DashboardPage({
         </div>
 
         {/* Right: Modern Audit Log Feed */}
-        <div style={{ background: "var(--bg-elevated)", border: "1px solid var(--border-default)", borderRadius: "var(--radius-lg)", padding: "24px" }}>
-          <h3 style={{ fontSize: "14px", fontWeight: 600, color: "var(--text-primary)", marginBottom: "20px", display: "flex", alignItems: "center", gap: "8px" }}>
+        <div style={{ background: "var(--bg-elevated)", border: "1px solid var(--border-default)", borderRadius: "var(--radius-lg)", padding: "20px" }}>
+          <h3 style={{ fontSize: "14px", fontWeight: 600, color: "var(--text-primary)", marginBottom: "16px", display: "flex", alignItems: "center", gap: "8px" }}>
             <ShieldCheck size={16} />
             Log Keamanan Sistem
           </h3>
@@ -207,3 +214,4 @@ export default async function DashboardPage({
     </div>
   );
 }
+

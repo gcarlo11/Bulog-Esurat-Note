@@ -114,6 +114,35 @@ export function exportToExcel(letters: LetterExportData[], filterLabel: string, 
       l.status === "ACTIVE" ? "Aktif" : "Arsip",
       l.createdBy.name,
     ]);
+  } else if (activeCategory === "SURAT_DINAS_INTERNAL") {
+    columnHeaders = [
+      "No",
+      "No. Surat",
+      "Tipe",
+      "Sifat",
+      "Hal (Perihal)",
+      "Dari",
+      "Kepada",
+      "Jumlah Lembar",
+      "Tembusan",
+      "Tanggal",
+      "Status",
+      "Didata Oleh",
+    ];
+    dataRows = letters.map((l, i) => [
+      i + 1,
+      l.letterNumber,
+      l.type === "MASUK" ? "Masuk" : "Keluar",
+      l.classification || "BIASA",
+      l.subject,
+      l.sender || "—",
+      l.recipient || "—",
+      (l as any).jumlahLembar || "—",
+      (l as any).tembusan || "—",
+      formatDateShort(l.letterDate),
+      l.status === "ACTIVE" ? "Aktif" : "Arsip",
+      l.createdBy.name,
+    ]);
   } else if (activeCategory === "NOTA_DIVISI") {
     columnHeaders = [
       "No",
@@ -327,6 +356,29 @@ export function exportToPdf(letters: LetterExportData[], filterLabel: string, pe
       8: { cellWidth: 20 },
     };
     totalTableWidth = 245; // Total: 10+30+16+55+35+35+24+20+20 = 245
+  } else if (activeCategory === "SURAT_DINAS_INTERNAL") {
+    headers = ["No", "No. Surat", "Tipe", "Sifat", "Hal (Perihal)", "Dari", "Kepada", "Tanggal"];
+    bodyData = letters.map((l, i) => [
+      (i + 1).toString(),
+      l.letterNumber,
+      l.type === "MASUK" ? "Masuk" : "Keluar",
+      l.classification || "BIASA",
+      l.subject,
+      l.sender || "—",
+      l.recipient || "—",
+      formatDateShort(l.letterDate),
+    ]);
+    columnStyles = {
+      0: { halign: "center", cellWidth: 10 },
+      1: { cellWidth: 45 },
+      2: { halign: "center", cellWidth: 16 },
+      3: { halign: "center", cellWidth: 18 },
+      4: { cellWidth: 60 },
+      5: { cellWidth: 35 },
+      6: { cellWidth: 35 },
+      7: { halign: "center", cellWidth: 24 },
+    };
+    totalTableWidth = 243;
   } else if (activeCategory === "NOTA_DIVISI") {
     headers = ["No", "Nomor Nota", "Keterangan", "Tanggal", "Jumlah", "TTD", "Status"];
     bodyData = letters.map((l, i) => [

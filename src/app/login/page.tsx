@@ -114,7 +114,7 @@ export default function LoginPage() {
           <div className="inline-flex items-center justify-center mb-4">
             <img src="/logo.svg" alt="BULOG Logo" className="h-16 w-auto object-contain" />
           </div>
-          <h1 className="text-4xl font-black text-zinc-950 dark:text-white tracking-tight">SISTEM E-SURAT</h1>
+          <h1 className="text-2xl sm:text-4xl font-black text-zinc-950 dark:text-white tracking-tight">SISTEM E-SURAT</h1>
           <p className="text-zinc-600 dark:text-zinc-400 text-xs mt-1.5 flex items-center justify-center gap-1.5 font-medium">
             <Building2 size={12} />
             PERUM BULOG KANTOR WILAYAH SUMSEL &amp; BABEL

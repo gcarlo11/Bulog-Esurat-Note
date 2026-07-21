@@ -193,6 +193,8 @@ async function createAuditLog(params: {
   });
 }
 
+import { processAndSaveFile } from "@/lib/serverFileUtils";
+
 // ============================================
 // Tambah Surat Baru
 // ============================================
@@ -206,9 +208,9 @@ export async function createLetterAction(formData: FormData) {
   const classification = (formData.get("classification") as string) || "BIASA";
 
   // Field spesifik kategori
-  const type = formData.get("type") as string; // KELUAR_MASUK
-  const sender = formData.get("sender") as string; // KELUAR_MASUK
-  const recipient = formData.get("recipient") as string; // KELUAR_MASUK, AGENDA
+  const type = formData.get("type") as string; // KELUAR_MASUK, SURAT_DINAS_INTERNAL
+  const sender = formData.get("sender") as string; // KELUAR_MASUK, SURAT_DINAS_INTERNAL
+  const recipient = formData.get("recipient") as string; // KELUAR_MASUK, AGENDA, SURAT_DINAS_INTERNAL
   const receivedDate = formData.get("receivedDate") as string; // KELUAR_MASUK
 
   const agendaType = formData.get("agendaType") as string; // AGENDA
@@ -219,6 +221,20 @@ export async function createLetterAction(formData: FormData) {
 
   const nominalStr = formData.get("nominal") as string; // NOTA_VERIFIKASI
   const paraf = formData.get("paraf") as string; // NOTA_VERIFIKASI
+
+  // Field Spesifik Surat Dinas Internal
+  const sdiNomor = formData.get("sdiNomor") as string;
+  const sdiKodeDivisi = formData.get("sdiKodeDivisi") as string;
+  const sdiNoTanggal = formData.get("sdiNoTanggal") as string;
+  const tembusan = formData.get("tembusan") as string;
+  const jumlahLembar = formData.get("jumlahLembar") as string;
+
+  // File Upload Backup
+  const attachmentFile = formData.get("attachment") as File | null;
+  let fileData = null;
+  if (attachmentFile && attachmentFile.size > 0) {
+    fileData = await processAndSaveFile(attachmentFile);
+  }
 
   // Validasi Berdasarkan Kategori
   if (category === "AGENDA") {
@@ -233,18 +249,37 @@ export async function createLetterAction(formData: FormData) {
     if (!subject || !letterDate || !nominalStr || !paraf) {
       return { error: "Field Perihal, Tanggal, Nominal, dan Paraf wajib diisi." };
     }
+  } else if (category === "SURAT_DINAS_INTERNAL") {
+    if (!type || !subject || !letterDate || !sender || !recipient) {
+      return { error: "Field Tipe, Pengirim (Dari), Penerima (Kepada), Perihal (Hal), dan Tanggal wajib diisi." };
+    }
   }
 
   const nominal = nominalStr ? parseFloat(nominalStr.replace(/[^0-9.-]+/g, "")) : null;
-  const letterNumber = await generateLetterNumber(category, new Date(letterDate), agendaType, type);
+
+  let letterNumber = "";
+  if (category === "SURAT_DINAS_INTERNAL" && (sdiNomor || sdiKodeDivisi || sdiNoTanggal)) {
+    const num = (sdiNomor || "001").trim();
+    const div = (sdiKodeDivisi || "DIV").trim();
+    const dt = (sdiNoTanggal || "01").trim();
+    letterNumber = `SDI-${num}/06040/${div}/${dt}`;
+
+    // Periksa keunikan nomor surat manual SDI
+    const existing = await prisma.letter.findUnique({ where: { letterNumber } });
+    if (existing) {
+      return { error: `Nomor surat "${letterNumber}" sudah terdaftar di sistem. Harap gunakan nomor urut yang berbeda.` };
+    }
+  } else {
+    letterNumber = await generateLetterNumber(category, new Date(letterDate), agendaType, type);
+  }
 
   const letter = await prisma.letter.create({
     data: {
       letterNumber,
       category,
-      type: category === "KELUAR_MASUK" ? type : null,
+      type: (category === "KELUAR_MASUK" || category === "SURAT_DINAS_INTERNAL") ? type : null,
       subject,
-      sender: category === "KELUAR_MASUK" ? sender : null,
+      sender: (category === "KELUAR_MASUK" || category === "SURAT_DINAS_INTERNAL") ? sender : null,
       recipient: category === "NOTA_VERIFIKASI" ? null : recipient,
       letterDate: new Date(letterDate),
       receivedDate: category === "KELUAR_MASUK" && receivedDate ? new Date(receivedDate) : null,
@@ -255,8 +290,13 @@ export async function createLetterAction(formData: FormData) {
       code: category === "AGENDA" ? code : null,
       nomorBerkas: category === "KELUAR_MASUK" ? nomorBerkas : null,
       nomorPetunjuk: category === "KELUAR_MASUK" ? nomorPetunjuk : null,
-      nominal: category === "NOTA_VERIFIKASI" ? nominal : null,
-      paraf: category === "NOTA_VERIFIKASI" ? paraf : null,
+      nominal: (category === "NOTA_VERIFIKASI" || category === "NOTA_DIVISI") ? nominal : null,
+      paraf: (category === "NOTA_VERIFIKASI" || category === "NOTA_DIVISI") ? paraf : null,
+      tembusan: category === "SURAT_DINAS_INTERNAL" ? (tembusan || null) : null,
+      jumlahLembar: category === "SURAT_DINAS_INTERNAL" ? (jumlahLembar || null) : null,
+      fileUrl: fileData?.fileUrl || null,
+      fileName: fileData?.fileName || null,
+      fileSize: fileData?.fileSize || null,
     },
   });
 
@@ -320,6 +360,11 @@ export async function updateLetterAction(
       nomorPetunjuk: letter.nomorPetunjuk,
       nominal: letter.nominal,
       paraf: letter.paraf,
+      tembusan: letter.tembusan,
+      jumlahLembar: letter.jumlahLembar,
+      fileUrl: letter.fileUrl,
+      fileName: letter.fileName,
+      fileSize: letter.fileSize,
     },
   });
 
@@ -338,6 +383,15 @@ export async function updateLetterAction(
   const nomorPetunjuk = formData.get("nomorPetunjuk") as string;
   const nominalStr = formData.get("nominal") as string;
   const paraf = formData.get("paraf") as string;
+  const tembusan = formData.get("tembusan") as string;
+  const jumlahLembar = formData.get("jumlahLembar") as string;
+
+  // File Upload Backup Baru
+  const attachmentFile = formData.get("attachment") as File | null;
+  let fileData = null;
+  if (attachmentFile && attachmentFile.size > 0) {
+    fileData = await processAndSaveFile(attachmentFile);
+  }
 
   const nominal = nominalStr ? parseFloat(nominalStr.replace(/[^0-9.-]+/g, "")) : letter.nominal;
 
@@ -345,7 +399,7 @@ export async function updateLetterAction(
     where: { id: letterId },
     data: {
       subject: subject || letter.subject,
-      sender: letter.category === "KELUAR_MASUK" ? (sender || letter.sender) : null,
+      sender: (letter.category === "KELUAR_MASUK" || letter.category === "SURAT_DINAS_INTERNAL") ? (sender || letter.sender) : null,
       recipient: letter.category === "NOTA_VERIFIKASI" ? null : (recipient || letter.recipient),
       letterDate: letterDate ? new Date(letterDate) : letter.letterDate,
       description: description ?? letter.description,
@@ -354,8 +408,13 @@ export async function updateLetterAction(
       code: letter.category === "AGENDA" ? (code || letter.code) : null,
       nomorBerkas: letter.category === "KELUAR_MASUK" ? (nomorBerkas || letter.nomorBerkas) : null,
       nomorPetunjuk: letter.category === "KELUAR_MASUK" ? (nomorPetunjuk || letter.nomorPetunjuk) : null,
-      nominal: letter.category === "NOTA_VERIFIKASI" ? (nominalStr ? nominal : letter.nominal) : null,
-      paraf: letter.category === "NOTA_VERIFIKASI" ? (paraf || letter.paraf) : null,
+      nominal: (letter.category === "NOTA_VERIFIKASI" || letter.category === "NOTA_DIVISI") ? (nominalStr ? nominal : letter.nominal) : null,
+      paraf: (letter.category === "NOTA_VERIFIKASI" || letter.category === "NOTA_DIVISI") ? (paraf || letter.paraf) : null,
+      tembusan: letter.category === "SURAT_DINAS_INTERNAL" ? (tembusan ?? letter.tembusan) : null,
+      jumlahLembar: letter.category === "SURAT_DINAS_INTERNAL" ? (jumlahLembar ?? letter.jumlahLembar) : null,
+      fileUrl: fileData ? fileData.fileUrl : letter.fileUrl,
+      fileName: fileData ? fileData.fileName : letter.fileName,
+      fileSize: fileData ? fileData.fileSize : letter.fileSize,
     },
   });
 
