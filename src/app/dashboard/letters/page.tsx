@@ -454,7 +454,7 @@ export default function LettersPage() {
               <input
                 type="number"
                 className="filter-select"
-                style={{ width: "90px" }}
+                style={{ width: "95px" }}
                 placeholder="Tahun"
                 value={filterYear}
                 onChange={(e) => {
@@ -517,14 +517,14 @@ export default function LettersPage() {
               ) : categoryTab === "SURAT_DINAS_INTERNAL" ? (
                 <thead>
                   <tr>
-                    <th style={{ width: "160px", minWidth: "130px" }}>No. Surat</th>
-                    <th>Perihal</th>
+                    <th style={{ width: "130px", minWidth: "130px" }}>No. Surat</th>
+                    <th style={{ width: "250px" }}>Perihal</th>
                     <th className="col-hide-mobile" style={{ width: "62px" }}>Tipe</th>
                     <th className="col-hide-mobile" style={{ width: "68px" }}>Sifat</th>
                     <th className="col-hide-mobile" style={{ width: "150px" }}>Dari → Kepada</th>
                     <th className="col-hide-mobile" style={{ width: "40px", textAlign: "center" }}>Lbr</th>
                     <th className="col-hide-mobile" style={{ width: "82px", whiteSpace: "nowrap" }}>Tanggal</th>
-                    <th style={{ width: "82px" }}>Aksi</th>
+                    <th style={{ width: "90px" }}>Aksi</th>
                   </tr>
                 </thead>
               ) : categoryTab === "KELUAR_MASUK" ? (

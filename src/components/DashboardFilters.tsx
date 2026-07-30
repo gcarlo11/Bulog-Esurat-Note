@@ -121,7 +121,7 @@ export function DashboardFilters() {
         <input
           type="number"
           className="filter-select"
-          style={{ width: "80px" }}
+          style={{ width: "95px" }}
           placeholder="Tahun"
           value={year}
           onChange={(e) => {
