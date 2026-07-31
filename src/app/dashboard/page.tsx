@@ -3,6 +3,7 @@ import { getAuthenticatedUser } from "@/lib/auth";
 import Link from "next/link";
 import { generateLetterHash } from "@/lib/hash";
 import { DashboardFilters } from "@/components/DashboardFilters";
+import { CalendarHeatmap } from "@/components/CalendarHeatmap";
 import {
   FileText,
   Inbox,
@@ -66,6 +67,9 @@ export default async function DashboardPage({
           </Link>
         )}
       </div>
+
+      {/* Calendar Heatmap */}
+      <CalendarHeatmap heatmap={stats.heatmap} />
 
       {/* Date/Month/Year filters */}
       <DashboardFilters />

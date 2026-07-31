@@ -723,8 +723,11 @@ export default function LetterDetailPage() {
                   </div>
                   <div className="form-row">
                     <div className="form-group">
-                      <label className="form-label" htmlFor="letterDate">Tanggal Surat *</label>
-                      <input id="letterDate" name="letterDate" type="date" className="form-input" defaultValue={new Date(letter.letterDate).toISOString().split("T")[0]} required />
+                      <label className="form-label" htmlFor="type">Tipe Surat *</label>
+                      <select id="type" name="type" className="form-select" defaultValue={letter.type || ""} required>
+                        <option value="MASUK">Masuk</option>
+                        <option value="KELUAR">Keluar</option>
+                      </select>
                     </div>
                     <div className="form-group">
                       <label className="form-label" htmlFor="classification">Klasifikasi</label>
@@ -735,6 +738,10 @@ export default function LetterDetailPage() {
                       </select>
                     </div>
                   </div>
+                  <div className="form-group">
+                    <label className="form-label" htmlFor="letterDate">Tanggal Surat *</label>
+                    <input id="letterDate" name="letterDate" type="date" className="form-input" defaultValue={new Date(letter.letterDate).toISOString().split("T")[0]} required />
+                  </div>
                   <div className="form-row">
                     <div className="form-group">
                       <label className="form-label" htmlFor="nomorBerkas">Nomor Berkas</label>
@@ -744,6 +751,57 @@ export default function LetterDetailPage() {
                       <label className="form-label" htmlFor="nomorPetunjuk">Nomor Petunjuk</label>
                       <input id="nomorPetunjuk" name="nomorPetunjuk" className="form-input" defaultValue={letter.nomorPetunjuk || ""} />
                     </div>
+                  </div>
+                </>
+              )}
+
+              {/* SPECIFIC FIELDS FOR SURAT DINAS INTERNAL */}
+              {letter.category === "SURAT_DINAS_INTERNAL" && (
+                <>
+                  <div className="form-group">
+                    <label className="form-label" htmlFor="subject">Perihal (Hal) *</label>
+                    <input id="subject" name="subject" className="form-input" defaultValue={letter.subject} required />
+                  </div>
+                  <div className="form-row">
+                    <div className="form-group">
+                      <label className="form-label" htmlFor="type">Tipe Surat *</label>
+                      <select id="type" name="type" className="form-select" defaultValue={letter.type || ""} required>
+                        <option value="MASUK">Masuk</option>
+                        <option value="KELUAR">Keluar</option>
+                      </select>
+                    </div>
+                    <div className="form-group">
+                      <label className="form-label" htmlFor="classification">Sifat Surat</label>
+                      <select id="classification" name="classification" className="form-select" defaultValue={letter.classification}>
+                        <option value="BIASA">Biasa</option>
+                        <option value="PENTING">Penting</option>
+                        <option value="RAHASIA">Rahasia</option>
+                      </select>
+                    </div>
+                  </div>
+                  <div className="form-row">
+                    <div className="form-group">
+                      <label className="form-label" htmlFor="sender">Dari (Pengirim) *</label>
+                      <input id="sender" name="sender" className="form-input" defaultValue={letter.sender || ""} required />
+                    </div>
+                    <div className="form-group">
+                      <label className="form-label" htmlFor="recipient">Kepada (Penerima) *</label>
+                      <input id="recipient" name="recipient" className="form-input" defaultValue={letter.recipient || ""} required />
+                    </div>
+                  </div>
+                  <div className="form-row">
+                    <div className="form-group">
+                      <label className="form-label" htmlFor="letterDate">Tanggal Surat *</label>
+                      <input id="letterDate" name="letterDate" type="date" className="form-input" defaultValue={new Date(letter.letterDate).toISOString().split("T")[0]} required />
+                    </div>
+                    <div className="form-group">
+                      <label className="form-label" htmlFor="jumlahLembar">Jumlah Lembar (Angka)</label>
+                      <input id="jumlahLembar" name="jumlahLembar" className="form-input" defaultValue={letter.jumlahLembar || ""} placeholder="Contoh: 1, 2, 3..." />
+                    </div>
+                  </div>
+                  <div className="form-group">
+                    <label className="form-label" htmlFor="tembusan">Tembusan</label>
+                    <input id="tembusan" name="tembusan" className="form-input" defaultValue={letter.tembusan || ""} placeholder="Contoh: Direktur Utama, Kepala SPI..." />
                   </div>
                 </>
               )}

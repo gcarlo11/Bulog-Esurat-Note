@@ -1,3 +1,4 @@
+/* Force stylesheet cache bust: 2 */
 @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=Inter:wght@300;400;500;600;700;800&display=swap');
 @import "tailwindcss";
 
@@ -1838,4 +1839,138 @@ tbody tr:hover {
   .letter-number-title {
     font-size: 17px;
   }
+}
+
+/* ============================================ */
+/* Calendar Heatmap                             */
+/* ============================================ */
+.heatmap-card {
+  background: var(--bg-elevated);
+  border: 1px solid var(--border-default);
+  border-radius: var(--radius-lg);
+  padding: 20px;
+  margin-bottom: 24px;
+  box-shadow: var(--shadow-sm);
+}
+
+.heatmap-header {
+  margin-bottom: 12px;
+}
+
+.heatmap-header h4 {
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--text-primary);
+  margin: 0 0 2px 0;
+}
+
+.heatmap-subtitle {
+  font-size: 11.5px;
+  color: var(--text-tertiary);
+}
+
+.heatmap-container-outer {
+  display: flex;
+  gap: 8px;
+  margin-top: 14px;
+  align-items: flex-start;
+}
+
+.day-labels {
+  display: grid;
+  grid-template-rows: repeat(7, 12px);
+  gap: 3px;
+  font-size: 9.5px;
+  color: var(--text-tertiary);
+  text-align: right;
+  padding-right: 4px;
+  user-select: none;
+  line-height: 12px;
+  padding-top: 18px; /* Alignment with cells */
+}
+
+.heatmap-grid-wrapper {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  overflow-x: auto;
+  flex: 1;
+}
+
+.month-labels {
+  display: grid;
+  grid-auto-flow: column;
+  grid-auto-columns: 12px;
+  gap: 3px;
+  font-size: 9.5px;
+  color: var(--text-tertiary);
+  user-select: none;
+  height: 14px;
+}
+
+.heatmap-grid {
+  display: grid;
+  grid-auto-flow: column;
+  grid-template-rows: repeat(7, 12px);
+  grid-auto-columns: 12px;
+  gap: 3px;
+}
+
+.heatmap-cell {
+  width: 12px;
+  height: 12px;
+  border-radius: 2px;
+  transition: transform 0.1s ease, filter 0.1s ease;
+  cursor: pointer;
+}
+
+.heatmap-cell:hover {
+  transform: scale(1.25);
+  filter: brightness(0.95);
+  z-index: 10;
+}
+
+/* Light Mode colors */
+.cell-empty {
+  background: #e1eafd;
+}
+.cell-low {
+  background: #91b2eb;
+}
+.cell-medium {
+  background: #60a5fa;
+}
+.cell-high {
+  background: #253d6d;
+}
+
+/* Dark Mode colors */
+.dark .cell-empty {
+  background: #1e293b;
+}
+.dark .cell-low {
+  background: #1e3a8a;
+}
+.dark .cell-medium {
+  background: #3b82f6;
+}
+.dark .cell-high {
+  background: #e7ad29;
+}
+
+.heatmap-legend {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 4px;
+  margin-top: 12px;
+  font-size: 11px;
+  color: var(--text-tertiary);
+}
+
+.heatmap-legend .heatmap-cell {
+  cursor: default;
+}
+.heatmap-legend .heatmap-cell:hover {
+  transform: none;
 }

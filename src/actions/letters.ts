@@ -369,6 +369,7 @@ export async function updateLetterAction(
   });
 
   // Ambil data form
+  const type = formData.get("type") as string;
   const subject = formData.get("subject") as string;
   const sender = formData.get("sender") as string;
   const recipient = formData.get("recipient") as string;
@@ -398,6 +399,7 @@ export async function updateLetterAction(
   const updated = await prisma.letter.update({
     where: { id: letterId },
     data: {
+      type: (letter.category === "KELUAR_MASUK" || letter.category === "SURAT_DINAS_INTERNAL") ? (type || letter.type) : null,
       subject: subject || letter.subject,
       sender: (letter.category === "KELUAR_MASUK" || letter.category === "SURAT_DINAS_INTERNAL") ? (sender || letter.sender) : null,
       recipient: letter.category === "NOTA_VERIFIKASI" ? null : (recipient || letter.recipient),
@@ -651,6 +653,10 @@ export async function getDashboardStats(params?: {
     baseWhere.letterDate = dateFilter;
   }
 
+  const oneYearAgo = new Date();
+  oneYearAgo.setHours(0, 0, 0, 0);
+  oneYearAgo.setDate(oneYearAgo.getDate() - 365);
+
   const [
     totalLetters,
     suratMasuk,
@@ -658,6 +664,7 @@ export async function getDashboardStats(params?: {
     suratBulanIni,
     recentLogs,
     recentLetters,
+    heatmapDataRaw,
   ] = await Promise.all([
     prisma.letter.count({ where: baseWhere }),
     prisma.letter.count({
@@ -687,7 +694,30 @@ export async function getDashboardStats(params?: {
         createdBy: { select: { name: true } },
       },
     }),
+    prisma.letter.findMany({
+      where: {
+        status: "ACTIVE",
+        letterDate: { gte: oneYearAgo },
+      },
+      select: {
+        letterDate: true,
+      },
+    }),
   ]);
+
+  const heatmap: Record<string, number> = {};
+  heatmapDataRaw.forEach((item) => {
+    try {
+      const d = new Date(item.letterDate);
+      const year = d.getFullYear();
+      const month = String(d.getMonth() + 1).padStart(2, "0");
+      const date = String(d.getDate()).padStart(2, "0");
+      const dateStr = `${year}-${month}-${date}`;
+      heatmap[dateStr] = (heatmap[dateStr] || 0) + 1;
+    } catch (e) {
+      // ignore
+    }
+  });
 
   return {
     totalLetters,
@@ -696,6 +726,7 @@ export async function getDashboardStats(params?: {
     suratBulanIni,
     recentLogs,
     recentLetters,
+    heatmap,
   };
 }
 
