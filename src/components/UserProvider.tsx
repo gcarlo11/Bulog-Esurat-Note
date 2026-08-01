@@ -27,12 +27,10 @@ export function useUser() {
   return ctx;
 }
 
-/** Helper: apakah user boleh mengedit/membuat surat */
 export function canEdit(role: string) {
   return role === "ADMIN" || role === "STAFF";
 }
 
-/** Helper: apakah user boleh mengarsipkan surat */
 export function canArchive(role: string) {
   return role === "ADMIN";
 }

@@ -12,9 +12,9 @@ export function CalendarHeatmap({ heatmap }: CalendarHeatmapProps) {
     const endDate = new Date(today.getFullYear(), today.getMonth(), today.getDate());
 
     const startDate = new Date(endDate);
-    startDate.setDate(startDate.getDate() - 364); // 365 days total
+    startDate.setDate(startDate.getDate() - 364); 
 
-    const startDay = startDate.getDay(); // 0 is Sunday
+    const startDay = startDate.getDay(); 
     const alignedStartDate = new Date(startDate);
     alignedStartDate.setDate(alignedStartDate.getDate() - startDay);
 
@@ -40,7 +40,6 @@ export function CalendarHeatmap({ heatmap }: CalendarHeatmapProps) {
         count,
       });
 
-      // Calculate month label position (only for the first row of each week, i.e., index % 7 === 0)
       if (i % 7 === 0) {
         const currentMonth = currentDate.getMonth();
         if (currentMonth !== lastMonth) {
@@ -57,7 +56,6 @@ export function CalendarHeatmap({ heatmap }: CalendarHeatmapProps) {
     return { days: generatedDays, monthLabels: labels };
   }, [heatmap]);
 
-  // Color logic based on activity level
   const getColorClass = (count: number) => {
     if (count === 0) return "cell-empty";
     if (count === 1) return "cell-low";
@@ -83,7 +81,6 @@ export function CalendarHeatmap({ heatmap }: CalendarHeatmapProps) {
       </div>
 
       <div className="heatmap-container-outer">
-        {/* Day labels (Sen, Rab, Jum) */}
         <div className="day-labels">
           <span></span>
           <span>Sen</span>
@@ -95,7 +92,6 @@ export function CalendarHeatmap({ heatmap }: CalendarHeatmapProps) {
         </div>
 
         <div className="heatmap-grid-wrapper">
-          {/* Month Labels row */}
           <div className="month-labels">
             {monthLabels.map((label, idx) => (
               <span
@@ -109,7 +105,6 @@ export function CalendarHeatmap({ heatmap }: CalendarHeatmapProps) {
             ))}
           </div>
 
-          {/* Heatmap cells */}
           <div className="heatmap-grid">
             {days.map((day, index) => (
               <div
