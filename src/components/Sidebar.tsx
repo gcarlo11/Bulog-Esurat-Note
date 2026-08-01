@@ -84,7 +84,6 @@ export function Sidebar({ user }: SidebarProps) {
 
   return (
     <>
-      {/* Mobile Top Header Bar */}
       <div className="mobile-header">
         <button
           className="mobile-menu-btn"
@@ -102,7 +101,6 @@ export function Sidebar({ user }: SidebarProps) {
         <ThemeSwitcher />
       </div>
 
-      {/* Backdrop overlay when sidebar is open on mobile */}
       {isMobileOpen && (
         <div
           className="mobile-overlay"
@@ -111,9 +109,7 @@ export function Sidebar({ user }: SidebarProps) {
         />
       )}
 
-      {/* Main Sidebar Drawer */}
       <aside className={`sidebar ${isMobileOpen ? "mobile-open" : ""}`}>
-        {/* Brand */}
         <div className="sidebar-brand" style={{ display: "flex", alignItems: "center", gap: "10px" }}>
           <div className="sidebar-brand-icon">
             <Inbox size={16} strokeWidth={2.5} />
@@ -121,7 +117,6 @@ export function Sidebar({ user }: SidebarProps) {
           <img src="/brand.svg" alt="BULOG" style={{ height: "40px", width: "auto", display: "block" }} />
         </div>
 
-        {/* Navigation */}
         <nav style={{ flex: 1 }}>
           {groups.map((group) => (
             <div key={group.label} className="nav-section">
@@ -144,7 +139,6 @@ export function Sidebar({ user }: SidebarProps) {
           ))}
         </nav>
 
-        {/* Footer */}
         <div className="sidebar-footer">
           <div
             style={{

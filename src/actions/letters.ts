@@ -4,14 +4,13 @@ import { prisma } from "@/lib/prisma";
 import { requireRole, getAuthenticatedUser } from "@/lib/auth";
 import { revalidatePath } from "next/cache";
 
-// ============================================
 // Helper: Generate Nomor Surat Otomatis
+
 // Format: [TIPE]-[TAHUN][BULAN]-[NOMOR_URUT]
 // Contoh: SM-202607-0001 (Surat Masuk ke-1 bulan Juli 2026)
-// ============================================
-// ============================================
+
 // Helper: Penomoran Suffix Backdate & Klasifikasi
-// ============================================
+
 function getSuffix(index: number): string {
   let suffix = "";
   let temp = index;

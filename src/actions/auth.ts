@@ -10,9 +10,6 @@ import {
 } from "@/lib/auth";
 import { redirect } from "next/navigation";
 
-// ============================================
-// Login Action
-// ============================================
 export async function loginAction(formData: FormData) {
   const email = formData.get("email") as string;
   const password = formData.get("password") as string;
@@ -42,7 +39,6 @@ export async function loginAction(formData: FormData) {
     role: user.role,
   });
 
-  // Log aktivitas login
   await prisma.auditLog.create({
     data: {
       action: "LOGIN",
@@ -55,9 +51,6 @@ export async function loginAction(formData: FormData) {
   redirect("/dashboard");
 }
 
-// ============================================
-// Logout Action
-// ============================================
 export async function logoutAction() {
   const session = await getSession();
 
@@ -76,9 +69,6 @@ export async function logoutAction() {
   redirect("/login");
 }
 
-// ============================================
-// Seed Admin User (untuk inisialisasi awal)
-// ============================================
 export async function seedAdminAction() {
   const existingAdmin = await prisma.user.findFirst({
     where: { role: "ADMIN" },
@@ -99,7 +89,6 @@ export async function seedAdminAction() {
     },
   });
 
-  // Juga buat user staff untuk demo
   const staffPassword = await hashPassword("staff123");
   await prisma.user.create({
     data: {
