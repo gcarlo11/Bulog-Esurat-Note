@@ -832,6 +832,7 @@ export default function LettersPage() {
         <CreateLetterModal
           onClose={() => setShowModal(false)}
           onSuccess={fetchLetters}
+          defaultCategory={categoryTab !== "ALL" ? categoryTab as any : undefined}
         />
       )}
     </div>

@@ -8,6 +8,7 @@ import { X, Save, AlertCircle, Upload, Paperclip } from "lucide-react";
 interface CreateLetterModalProps {
   onClose: () => void;
   onSuccess: () => void;
+  defaultCategory?: "KELUAR_MASUK" | "AGENDA" | "NOTA_VERIFIKASI" | "NOTA_DIVISI" | "SURAT_DINAS_INTERNAL";
 }
 
 const agendaTypes = [
@@ -27,8 +28,10 @@ const agendaTypes = [
   "Surat Izin (Cuti)",
 ];
 
-export function CreateLetterModal({ onClose, onSuccess }: CreateLetterModalProps) {
-  const [category, setCategory] = useState<"KELUAR_MASUK" | "AGENDA" | "NOTA_VERIFIKASI" | "NOTA_DIVISI" | "SURAT_DINAS_INTERNAL">("KELUAR_MASUK");
+export function CreateLetterModal({ onClose, onSuccess, defaultCategory }: CreateLetterModalProps) {
+  const [category, setCategory] = useState<"KELUAR_MASUK" | "AGENDA" | "NOTA_VERIFIKASI" | "NOTA_DIVISI" | "SURAT_DINAS_INTERNAL">(
+    defaultCategory || "KELUAR_MASUK"
+  );
   const [letterType, setLetterType] = useState("MASUK");
   const [nominalRaw, setNominalRaw] = useState("");
   const [error, setError] = useState("");
