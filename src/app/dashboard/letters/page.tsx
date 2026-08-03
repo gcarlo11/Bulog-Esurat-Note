@@ -65,12 +65,12 @@ function formatRupiah(value: number) {
 }
 
 const CATEGORIES = [
-  { key: "ALL", label: "Semua Dokumen" },
-  { key: "SURAT_DINAS_INTERNAL", label: "Surat Dinas Internal" },
-  { key: "NOTA_DIVISI", label: "Nota Internal / Divisi" },
-  { key: "NOTA_VERIFIKASI", label: "Nota Verifikasi" },
-  { key: "KELUAR_MASUK", label: "Surat Keluar / Masuk" },
   { key: "AGENDA", label: "Surat Agenda" },
+  { key: "KELUAR_MASUK", label: "Surat Keluar / Masuk" },
+  { key: "SURAT_DINAS_INTERNAL", label: "Surat Dinas Internal" },
+  { key: "NOTA_VERIFIKASI", label: "Nota Verifikasi" },
+  { key: "NOTA_DIVISI", label: "Nota Internal / Divisi" },
+  { key: "ALL", label: "Semua Dokumen" },
 ];
 
 const agendaTypesMapping = [
