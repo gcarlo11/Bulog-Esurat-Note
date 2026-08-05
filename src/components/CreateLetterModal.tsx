@@ -195,9 +195,7 @@ export function CreateLetterModal({ onClose, onSuccess, defaultCategory }: Creat
 
           <hr style={{ border: "none", borderTop: "1px solid var(--border-default)", margin: "16px 0" }} />
 
-          {/* ======================================================== */}
           {/* FORM A: SURAT AGENDA                                     */}
-          {/* ======================================================== */}
           {category === "AGENDA" && (
             <>
               <div className="form-row">
@@ -272,9 +270,7 @@ export function CreateLetterModal({ onClose, onSuccess, defaultCategory }: Creat
             </>
           )}
 
-          {/* ======================================================== */}
           {/* FORM B: SURAT KELUAR MASUK                               */}
-          {/* ======================================================== */}
           {category === "KELUAR_MASUK" && (
             <>
               <div className="form-row">
@@ -421,9 +417,7 @@ export function CreateLetterModal({ onClose, onSuccess, defaultCategory }: Creat
             </>
           )}
 
-          {/* ======================================================== */}
           {/* FORM C: NOTA VERIFIKASI                                  */}
-          {/* ======================================================== */}
           {category === "NOTA_VERIFIKASI" && (
             <>
               <div className="form-group">
@@ -491,9 +485,7 @@ export function CreateLetterModal({ onClose, onSuccess, defaultCategory }: Creat
             </>
           )}
 
-          {/* ======================================================== */}
           {/* FORM D: NOTA INTERNAL / DIVISI                           */}
-          {/* ======================================================== */}
           {category === "NOTA_DIVISI" && (
             <>
               <div className="form-group">
@@ -561,9 +553,7 @@ export function CreateLetterModal({ onClose, onSuccess, defaultCategory }: Creat
             </>
           )}
 
-          {/* ======================================================== */}
           {/* FORM E: SURAT DINAS INTERNAL                             */}
-          {/* ======================================================== */}
           {category === "SURAT_DINAS_INTERNAL" && (
             <>
               <div className="form-row">

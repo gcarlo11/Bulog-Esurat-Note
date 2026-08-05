@@ -2,9 +2,7 @@ import * as XLSX from "xlsx";
 import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
 
-// ============================================
 // Konfigurasi Kop Surat
-// ============================================
 const COMPANY_NAME = "PERUM BULOG";
 const COMPANY_DIVISION = "KANTOR WILAYAH SUMATERA SELATAN & BANGKA BELITUNG";
 const COMPANY_ADDRESS = "Jl. Perintis Kemerdekaan No.1, Duku, Ilir Tim. II, Kota Palembang, Sumatera Selatan 30114, Indonesia";
@@ -46,12 +44,7 @@ function formatRupiah(value: number) {
   }).format(value);
 }
 
-// ============================================
 // Export ke Excel (.xlsx)
-// ============================================
-// ============================================
-// Export ke Excel (.xlsx)
-// ============================================
 export function exportToExcel(letters: LetterExportData[], filterLabel: string, periodLabel: string) {
   const now = new Date();
 
