@@ -138,25 +138,35 @@ async function generateLetterNumber(
     const nextBase = maxBase > 0 ? maxBase + 1 : 1;
     return `${prefix}-${String(nextBase).padStart(3, "0")}`;
   } else {
-    const beforeOrEqualLetters = parsedLetters
-      .filter((l) => l.letterDate.getTime() <= targetTime)
-      .sort((a, b) => {
-        const dateDiff = b.letterDate.getTime() - a.letterDate.getTime();
-        if (dateDiff !== 0) return dateDiff;
-        return b.createdAt.getTime() - a.createdAt.getTime();
-      });
+    let baseNumberToUse = 1;
 
-    let baseNumberToUse: number;
+    const candidateBases = Array.from(
+      new Set(
+        parsedLetters
+          .filter((l) => l.letterDate.getTime() <= targetTime)
+          .map((l) => l.baseNumber)
+      )
+    ).sort((a, b) => b - a);
 
-    if (beforeOrEqualLetters.length > 0) {
-      baseNumberToUse = beforeOrEqualLetters[0].baseNumber;
-    } else {
-      const earliestLetter = parsedLetters.sort((a, b) => {
-        const dateDiff = a.letterDate.getTime() - b.letterDate.getTime();
-        if (dateDiff !== 0) return dateDiff;
-        return a.createdAt.getTime() - b.createdAt.getTime();
-      })[0];
-      baseNumberToUse = earliestLetter.baseNumber;
+    let foundValidBase = false;
+    for (const B of candidateBases) {
+      const hasFutureSibling = parsedLetters.some(
+        (l) => l.baseNumber === B && l.letterDate.getTime() > targetTime
+      );
+      if (!hasFutureSibling) {
+        baseNumberToUse = B;
+        foundValidBase = true;
+        break;
+      }
+    }
+
+    if (!foundValidBase) {
+      if (candidateBases.length > 0) {
+        baseNumberToUse = candidateBases[candidateBases.length - 1]; // Terkecil dari candidate
+      } else {
+        const allBases = parsedLetters.map((l) => l.baseNumber);
+        baseNumberToUse = Math.min(...allBases);
+      }
     }
 
     const siblings = parsedLetters.filter((l) => l.baseNumber === baseNumberToUse);
