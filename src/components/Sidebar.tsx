@@ -17,6 +17,7 @@ import {
   FileText,
   Menu,
   X,
+  Users,
 } from "lucide-react";
 
 interface SidebarProps {
@@ -51,6 +52,7 @@ const navGroups = [
 const adminGroup = {
   label: "Administrasi",
   items: [
+    { name: "Manajemen Pengguna", href: "/dashboard/users", icon: Users },
     { name: "Log Audit", href: "/dashboard/audit-logs", icon: ShieldCheck },
   ],
 };
