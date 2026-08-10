@@ -31,12 +31,21 @@ export async function loginAction(formData: FormData) {
     return { error: "Email atau password salah." };
   }
 
+  const sessionUuid = crypto.randomUUID();
+
+  // Update activeSessionId di database untuk user yang bersangkutan
+  await prisma.user.update({
+    where: { id: user.id },
+    data: { activeSessionId: sessionUuid },
+  });
+
   // Set session cookie
   await setSession({
     userId: user.id,
     email: user.email,
     name: user.name,
     role: user.role,
+    sessionId: sessionUuid,
   });
 
   await prisma.auditLog.create({

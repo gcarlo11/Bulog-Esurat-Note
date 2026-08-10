@@ -12,6 +12,7 @@ interface SessionData {
   email: string;
   name: string;
   role: string;
+  sessionId?: string;
 }
 
 const SESSION_COOKIE_NAME = "e-surat-session";
@@ -49,6 +50,7 @@ async function createToken(data: SessionData): Promise<string> {
     email: data.email,
     name: data.name,
     role: data.role,
+    sessionId: data.sessionId,
   })
     .setProtectedHeader({ alg: "HS256" })
     .setIssuedAt()
@@ -79,6 +81,7 @@ async function verifyToken(token: string): Promise<SessionData | null> {
       email: payload.email as string,
       name: payload.name as string,
       role: payload.role as string,
+      sessionId: payload.sessionId as string | undefined,
     };
   } catch {
     // Token tidak valid, kedaluwarsa, atau dipalsukan
@@ -139,8 +142,16 @@ export async function getAuthenticatedUser() {
       email: true,
       role: true,
       isActive: true,
+      activeSessionId: true,
     },
   });
+
+  if (!user) return null;
+
+  // Jika activeSessionId ada di database, verifikasi kesamaan dengan token
+  if (user.activeSessionId && session.sessionId !== user.activeSessionId) {
+    return null;
+  }
 
   return user;
 }
