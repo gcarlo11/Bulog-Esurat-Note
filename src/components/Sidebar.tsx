@@ -95,9 +95,9 @@ export function Sidebar({ user }: SidebarProps) {
           {isMobileOpen ? <X size={20} /> : <Menu size={20} />}
         </button>
         <div className="mobile-brand" style={{ display: "flex", alignItems: "center", gap: "8px" }}>
-          <div className="sidebar-brand-icon" style={{ width: 24, height: 24, borderRadius: 5 }}>
+          {/* <div className="sidebar-brand-icon" style={{ width: 24, height: 24, borderRadius: 5 }}>
             <Inbox size={14} strokeWidth={2.5} />
-          </div>
+          </div> */}
           <img src="/brand.svg" alt="BULOG" style={{ height: "35px", width: "auto", display: "block" }} />
         </div>
         <ThemeSwitcher />
@@ -113,9 +113,9 @@ export function Sidebar({ user }: SidebarProps) {
 
       <aside className={`sidebar ${isMobileOpen ? "mobile-open" : ""}`}>
         <div className="sidebar-brand" style={{ display: "flex", alignItems: "center", gap: "10px" }}>
-          <div className="sidebar-brand-icon">
+          {/* <div className="sidebar-brand-icon">
             <Inbox size={16} strokeWidth={2.5} />
-          </div>
+          </div> */}
           <img src="/brand.svg" alt="BULOG" style={{ height: "40px", width: "auto", display: "block" }} />
         </div>
 
