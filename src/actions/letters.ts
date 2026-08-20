@@ -72,7 +72,7 @@ async function generateLetterNumber(
     };
     prefix = agendaPrefixes[agendaType || ""] || "AGD";
   } else if (category === "NOTA_VERIFIKASI") {
-    prefix = "NV";
+    prefix = "V";
   } else if (category === "NOTA_DIVISI") {
     prefix = "ND";
   }
@@ -215,6 +215,7 @@ export async function createLetterAction(formData: FormData) {
   const letterDate = formData.get("letterDate") as string;
   const description = formData.get("description") as string;
   const classification = (formData.get("classification") as string) || "BIASA";
+  const customLetterNumber = formData.get("customLetterNumber") as string;
 
   // Field spesifik kategori
   const type = formData.get("type") as string; // KELUAR_MASUK, SURAT_DINAS_INTERNAL
@@ -267,7 +268,14 @@ export async function createLetterAction(formData: FormData) {
   const nominal = nominalStr ? parseFloat(nominalStr.replace(/[^0-9.-]+/g, "")) : null;
 
   let letterNumber = "";
-  if (category === "SURAT_DINAS_INTERNAL" && (sdiNomor || sdiKodeDivisi || sdiNoTanggal)) {
+  if (customLetterNumber && customLetterNumber.trim()) {
+    letterNumber = customLetterNumber.trim();
+    // Periksa keunikan nomor surat manual
+    const existing = await prisma.letter.findUnique({ where: { letterNumber } });
+    if (existing) {
+      return { error: `Nomor surat "${letterNumber}" sudah terdaftar di sistem. Harap gunakan nomor yang berbeda.` };
+    }
+  } else if (category === "SURAT_DINAS_INTERNAL" && (sdiNomor || sdiKodeDivisi || sdiNoTanggal)) {
     const num = (sdiNomor || "001").trim();
     const div = (sdiKodeDivisi || "DIV").trim();
     const dt = (sdiNoTanggal || "01").trim();

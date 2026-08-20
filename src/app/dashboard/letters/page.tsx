@@ -5,6 +5,7 @@ import Link from "next/link";
 import { useSearchParams, useRouter } from "next/navigation";
 import { getLetters, getLettersForExport } from "@/actions/letters";
 import { CreateLetterModal } from "@/components/CreateLetterModal";
+import { ImportLettersModal } from "@/components/ImportLettersModal";
 import { useUser, canEdit } from "@/components/UserProvider";
 import { exportToExcel, exportToPdf } from "@/lib/export";
 import {
@@ -20,6 +21,7 @@ import {
   Download,
   Paperclip,
   Layers,
+  Upload,
 } from "lucide-react";
 
 interface Letter {
@@ -108,6 +110,7 @@ export default function LettersPage() {
   const [type, setType] = useState(typeFilter);
   const [agendaType, setAgendaType] = useState<string>(agendaTypeFilter);
   const [showModal, setShowModal] = useState(false);
+  const [showImportModal, setShowImportModal] = useState(false);
   const [loading, setLoading] = useState(true);
   const [exporting, setExporting] = useState(false);
 
@@ -283,10 +286,21 @@ export default function LettersPage() {
           </button>
 
           {canEdit(user.role) && (
-            <button className="btn btn-primary btn-sm" onClick={() => setShowModal(true)}>
-              <Plus size={14} />
-              Registrasi Dokumen
-            </button>
+            <>
+              <button
+                className="btn btn-secondary btn-sm"
+                onClick={() => setShowImportModal(true)}
+                title="Impor Data dari Excel"
+                style={{ display: "flex", alignItems: "center", gap: "4px" }}
+              >
+                <Upload size={14} />
+                Impor Data
+              </button>
+              <button className="btn btn-primary btn-sm" onClick={() => setShowModal(true)}>
+                <Plus size={14} />
+                Registrasi Dokumen
+              </button>
+            </>
           )}
         </div>
       </div>
@@ -833,6 +847,13 @@ export default function LettersPage() {
           onClose={() => setShowModal(false)}
           onSuccess={fetchLetters}
           defaultCategory={categoryTab !== "ALL" ? categoryTab as any : undefined}
+        />
+      )}
+
+      {showImportModal && canEdit(user.role) && (
+        <ImportLettersModal
+          onClose={() => setShowImportModal(false)}
+          onSuccess={fetchLetters}
         />
       )}
     </div>
