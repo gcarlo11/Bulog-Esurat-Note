@@ -1812,7 +1812,29 @@ tbody tr:hover {
 
   .modal {
     max-height: 94vh;
+    border-bottom-left-radius: 0;
+    border-bottom-right-radius: 0;
   }
+
+  .page-header-flex > div:last-child {
+    display: flex;
+    flex-wrap: wrap;
+    width: 100%;
+    gap: 6px;
+  }
+
+  .page-header-flex > div:last-child .btn {
+    flex: 1 1 calc(50% - 4px);
+    justify-content: center;
+    text-align: center;
+  }
+}
+
+/* ============================================ */
+/* Touch & Mobile Table Optimization            */
+/* ============================================ */
+.table-wrapper {
+  -webkit-overflow-scrolling: touch;
 }
 
 /* ============================================ */
