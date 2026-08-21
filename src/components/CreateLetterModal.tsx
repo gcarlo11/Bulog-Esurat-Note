@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { createLetterAction } from "@/actions/letters";
 import { formatFileSize } from "@/lib/fileUtils";
-import { X, Save, AlertCircle, Upload, Paperclip } from "lucide-react";
+import { X, Save, AlertCircle, Upload, Paperclip, CheckCircle2, Copy, Check } from "lucide-react";
 
 interface CreateLetterModalProps {
   onClose: () => void;
@@ -44,6 +44,28 @@ export function CreateLetterModal({ onClose, onSuccess, defaultCategory }: Creat
 
   const [compressedFile, setCompressedFile] = useState<File | null>(null);
   const [compressionStats, setCompressionStats] = useState<{ original: number; compressed: number } | null>(null);
+  
+  const [successData, setSuccessData] = useState<any | null>(null);
+  const [copied, setCopied] = useState(false);
+
+  const handleCopy = () => {
+    if (successData?.letterNumber) {
+      navigator.clipboard.writeText(successData.letterNumber);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    }
+  };
+
+  const getCategoryLabel = (cat: string) => {
+    switch (cat) {
+      case "KELUAR_MASUK": return "Surat Keluar / Masuk";
+      case "AGENDA": return "Surat Agenda";
+      case "NOTA_VERIFIKASI": return "Nota Verifikasi";
+      case "NOTA_DIVISI": return "Nota Internal / Divisi";
+      case "SURAT_DINAS_INTERNAL": return "Surat Dinas Internal";
+      default: return cat;
+    }
+  };
 
   // Helper formatting Rupiah
   function handleNominalChange(value: string) {
@@ -138,14 +160,174 @@ export function CreateLetterModal({ onClose, onSuccess, defaultCategory }: Creat
       if (result?.error) {
         setError(result.error);
       } else if (result?.success) {
+        setSuccessData(result.letter);
         onSuccess();
-        onClose();
       }
     } catch {
       setError("Terjadi kesalahan saat menyimpan dokumen.");
     } finally {
       setLoading(false);
     }
+  }
+
+  if (successData) {
+    return (
+      <div className="modal-overlay" onClick={(e) => e.target === e.currentTarget && onClose()}>
+        <div className="modal" style={{ maxWidth: "520px" }}>
+          <div className="modal-header">
+            <h3>Dokumen Berhasil Terdaftar</h3>
+            <button className="modal-close" onClick={onClose} aria-label="Tutup modal">
+              <X size={16} />
+            </button>
+          </div>
+
+          <div style={{ display: "flex", flexDirection: "column", gap: "16px" }}>
+            
+            {/* Alert / Notification Banner */}
+            <div className="alert alert-success" style={{ margin: 0, padding: "12px 16px" }}>
+              <CheckCircle2 size={18} />
+              <span>Dokumen baru telah berhasil disimpan ke database.</span>
+            </div>
+
+            {/* Hero Card for Registered Letter Number */}
+            <div style={{
+              background: "var(--bg-subtle)",
+              border: "1px dashed var(--border-default)",
+              borderRadius: "var(--radius-lg)",
+              padding: "16px",
+              textAlign: "center",
+              position: "relative"
+            }}>
+              <div style={{ fontSize: "11px", fontWeight: 600, textTransform: "uppercase", letterSpacing: "0.06em", color: "var(--text-tertiary)", marginBottom: "6px" }}>
+                Nomor Surat Terdaftar
+              </div>
+              <div style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: "10px" }}>
+                <span style={{
+                  fontFamily: "var(--font-mono)",
+                  fontSize: "22px",
+                  fontWeight: 700,
+                  color: "var(--accent-text)",
+                  letterSpacing: "-0.01em",
+                  wordBreak: "break-all"
+                }}>
+                  {successData.letterNumber}
+                </span>
+                <button
+                  type="button"
+                  onClick={handleCopy}
+                  className="btn btn-secondary btn-sm"
+                  style={{ display: "inline-flex", alignItems: "center", gap: "4px", padding: "4px 8px" }}
+                  title="Salin nomor surat"
+                >
+                  {copied ? <Check size={13} style={{ color: "#10b981" }} /> : <Copy size={13} />}
+                  <span>{copied ? "Tersalin!" : "Salin"}</span>
+                </button>
+              </div>
+            </div>
+
+            {/* Detail Summary Grid */}
+            <div style={{
+              display: "flex",
+              flexDirection: "column",
+              gap: "10px",
+              fontSize: "13px",
+              background: "var(--bg-muted)",
+              padding: "16px",
+              borderRadius: "var(--radius-lg)",
+              border: "1px solid var(--border-default)"
+            }}>
+              <div style={{ display: "flex", justifyContent: "space-between", borderBottom: "1px solid var(--border-subtle)", paddingBottom: "8px" }}>
+                <span style={{ color: "var(--text-tertiary)", fontWeight: 500 }}>Kategori</span>
+                <span style={{ color: "var(--text-primary)", fontWeight: 600 }}>{getCategoryLabel(successData.category)}</span>
+              </div>
+              
+              {successData.category === "AGENDA" && successData.agendaType && (
+                <div style={{ display: "flex", justifyContent: "space-between", borderBottom: "1px solid var(--border-subtle)", paddingBottom: "8px" }}>
+                  <span style={{ color: "var(--text-tertiary)", fontWeight: 500 }}>Jenis Agenda</span>
+                  <span style={{ color: "var(--text-primary)", fontWeight: 600 }}>{successData.agendaType}</span>
+                </div>
+              )}
+
+              {successData.type && (
+                <div style={{ display: "flex", justifyContent: "space-between", borderBottom: "1px solid var(--border-subtle)", paddingBottom: "8px", alignItems: "center" }}>
+                  <span style={{ color: "var(--text-tertiary)", fontWeight: 500 }}>Tipe Surat</span>
+                  <span className={`type-badge type-${successData.type.toLowerCase()}`}>
+                    {successData.type === "MASUK" ? "Surat Masuk" : "Surat Keluar"}
+                  </span>
+                </div>
+              )}
+
+              <div style={{ display: "flex", flexDirection: "column", gap: "3px", borderBottom: "1px solid var(--border-subtle)", paddingBottom: "8px" }}>
+                <span style={{ color: "var(--text-tertiary)", fontWeight: 500, fontSize: "12px" }}>Perihal / Hal</span>
+                <span style={{ color: "var(--text-primary)", fontWeight: 600, lineHeight: "1.4" }}>{successData.subject}</span>
+              </div>
+
+              {successData.sender && (
+                <div style={{ display: "flex", justifyContent: "space-between", borderBottom: "1px solid var(--border-subtle)", paddingBottom: "8px" }}>
+                  <span style={{ color: "var(--text-tertiary)", fontWeight: 500 }}>Pengirim (Dari)</span>
+                  <span style={{ color: "var(--text-primary)", fontWeight: 600 }}>{successData.sender}</span>
+                </div>
+              )}
+
+              {successData.recipient && (
+                <div style={{ display: "flex", justifyContent: "space-between", borderBottom: "1px solid var(--border-subtle)", paddingBottom: "8px" }}>
+                  <span style={{ color: "var(--text-tertiary)", fontWeight: 500 }}>Penerima (Kepada)</span>
+                  <span style={{ color: "var(--text-primary)", fontWeight: 600 }}>{successData.recipient}</span>
+                </div>
+              )}
+
+              <div style={{ display: "flex", justifyContent: "space-between", borderBottom: (successData.nominal || successData.paraf) ? "1px solid var(--border-subtle)" : "none", paddingBottom: (successData.nominal || successData.paraf) ? "8px" : "0" }}>
+                <span style={{ color: "var(--text-tertiary)", fontWeight: 500 }}>Tanggal Surat</span>
+                <span style={{ color: "var(--text-primary)", fontWeight: 600 }}>
+                  {new Date(successData.letterDate).toLocaleDateString("id-ID", {
+                    day: "numeric",
+                    month: "long",
+                    year: "numeric"
+                  })}
+                </span>
+              </div>
+
+              {(successData.category === "NOTA_VERIFIKASI" || successData.category === "NOTA_DIVISI") && successData.nominal && (
+                <div style={{ display: "flex", justifyContent: "space-between", borderBottom: successData.paraf ? "1px solid var(--border-subtle)" : "none", paddingBottom: successData.paraf ? "8px" : "0" }}>
+                  <span style={{ color: "var(--text-tertiary)", fontWeight: 500 }}>Nominal Keuangan</span>
+                  <span style={{ color: "var(--accent-text)", fontWeight: 700 }}>
+                    Rp {Number(successData.nominal).toLocaleString("id-ID")}
+                  </span>
+                </div>
+              )}
+
+              {successData.paraf && (
+                <div style={{ display: "flex", justifyContent: "space-between" }}>
+                  <span style={{ color: "var(--text-tertiary)", fontWeight: 500 }}>
+                    {successData.category === "NOTA_VERIFIKASI" ? "Paraf / Disetujui" : "TTD / Mengetahui"}
+                  </span>
+                  <span style={{ color: "var(--text-primary)", fontWeight: 600 }}>{successData.paraf}</span>
+                </div>
+              )}
+            </div>
+
+            {/* Standard Modal Actions Footer */}
+            <div className="modal-actions" style={{ marginTop: "12px", paddingTop: "16px", borderTop: "1px solid var(--border-default)" }}>
+              <button
+                type="button"
+                className="btn btn-secondary"
+                onClick={() => setSuccessData(null)}
+              >
+                + Tambah Surat Lain
+              </button>
+              <button
+                type="button"
+                className="btn btn-primary"
+                onClick={onClose}
+              >
+                Selesai & Tutup
+              </button>
+            </div>
+            
+          </div>
+        </div>
+      </div>
+    );
   }
 
   return (
@@ -471,7 +653,7 @@ export function CreateLetterModal({ onClose, onSuccess, defaultCategory }: Creat
 
               <div className="form-group">
                 <label className="form-label" htmlFor="paraf">
-                  Paraf / Disetujui Oleh *
+                  Paraf / Disetujui Oleh
                 </label>
                 <input
                   id="paraf"
@@ -479,7 +661,6 @@ export function CreateLetterModal({ onClose, onSuccess, defaultCategory }: Creat
                   type="text"
                   className="form-input"
                   placeholder="Nama pejabat pemberi persetujuan paraf..."
-                  required
                 />
               </div>
             </>
@@ -539,7 +720,7 @@ export function CreateLetterModal({ onClose, onSuccess, defaultCategory }: Creat
 
               <div className="form-group">
                 <label className="form-label" htmlFor="paraf">
-                  TTD / Mengetahui *
+                  TTD / Mengetahui
                 </label>
                 <input
                   id="paraf"
@@ -547,7 +728,6 @@ export function CreateLetterModal({ onClose, onSuccess, defaultCategory }: Creat
                   type="text"
                   className="form-input"
                   placeholder="Nama pejabat yang menandatangani / TTD..."
-                  required
                 />
               </div>
             </>

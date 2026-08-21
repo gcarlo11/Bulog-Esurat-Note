@@ -831,8 +831,8 @@ export default function LetterDetailPage() {
                     </div>
                   </div>
                   <div className="form-group">
-                    <label className="form-label" htmlFor="paraf">TTD / Mengetahui *</label>
-                    <input id="paraf" name="paraf" className="form-input" defaultValue={letter.paraf || ""} required />
+                    <label className="form-label" htmlFor="paraf">TTD / Mengetahui</label>
+                    <input id="paraf" name="paraf" className="form-input" defaultValue={letter.paraf || ""} />
                   </div>
                 </>
               )}
@@ -862,8 +862,8 @@ export default function LetterDetailPage() {
                     </div>
                   </div>
                   <div className="form-group">
-                    <label className="form-label" htmlFor="paraf">Paraf / Disetujui Oleh *</label>
-                    <input id="paraf" name="paraf" className="form-input" defaultValue={letter.paraf || ""} required />
+                    <label className="form-label" htmlFor="paraf">Paraf / Disetujui Oleh</label>
+                    <input id="paraf" name="paraf" className="form-input" defaultValue={letter.paraf || ""} />
                   </div>
                 </>
               )}

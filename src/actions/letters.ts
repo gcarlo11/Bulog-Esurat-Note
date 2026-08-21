@@ -256,8 +256,8 @@ export async function createLetterAction(formData: FormData) {
       return { error: "Field Tipe, Pengirim, Penerima, Perihal, dan Tanggal wajib diisi." };
     }
   } else if (category === "NOTA_VERIFIKASI") {
-    if (!subject || !letterDate || !nominalStr || !paraf) {
-      return { error: "Field Perihal, Tanggal, Nominal, dan Paraf wajib diisi." };
+    if (!subject || !letterDate || !nominalStr) {
+      return { error: "Field Perihal, Tanggal, dan Nominal wajib diisi." };
     }
   } else if (category === "SURAT_DINAS_INTERNAL") {
     if (!type || !subject || !letterDate || !sender || !recipient) {
@@ -333,7 +333,7 @@ export async function createLetterAction(formData: FormData) {
 
   revalidatePath("/dashboard");
   revalidatePath("/dashboard/letters");
-  return { success: `Dokumen ${letterNumber} berhasil diregistrasi.` };
+  return { success: `Dokumen ${letterNumber} berhasil diregistrasi.`, letter };
 }
 
 // ============================================
@@ -428,7 +428,7 @@ export async function updateLetterAction(
       nomorBerkas: letter.category === "KELUAR_MASUK" ? (nomorBerkas || letter.nomorBerkas) : null,
       nomorPetunjuk: letter.category === "KELUAR_MASUK" ? (nomorPetunjuk || letter.nomorPetunjuk) : null,
       nominal: (letter.category === "NOTA_VERIFIKASI" || letter.category === "NOTA_DIVISI") ? (nominalStr ? nominal : letter.nominal) : null,
-      paraf: (letter.category === "NOTA_VERIFIKASI" || letter.category === "NOTA_DIVISI") ? (paraf || letter.paraf) : null,
+      paraf: (letter.category === "NOTA_VERIFIKASI" || letter.category === "NOTA_DIVISI") ? (paraf !== null ? (paraf.trim() || null) : letter.paraf) : null,
       tembusan: letter.category === "SURAT_DINAS_INTERNAL" ? (tembusan ?? letter.tembusan) : null,
       jumlahLembar: letter.category === "SURAT_DINAS_INTERNAL" ? (jumlahLembar ?? letter.jumlahLembar) : null,
       fileUrl: fileData ? fileData.fileUrl : letter.fileUrl,

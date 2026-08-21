@@ -106,11 +106,11 @@ export function ImportLettersModal({ onClose, onSuccess }: ImportLettersModalPro
         "Keterangan"
       ];
       sampleData = [{
-        "Nomor Surat (Opsional)": "V-001",
+        "Nomor Surat (Opsional)": "V/ND-001",
         "Tanggal Surat (YYYY-MM-DD)": "2026-06-01",
         "Perihal": "Reimburse Uang Jalan",
         "Nominal (Angka saja)": "150000",
-        "Paraf/Disetujui Oleh": "Manager IT",
+        "Paraf/Disetujui Oleh": "Manager Adm. & Keuangan",
         "Keterangan": "Sudah verifikasi"
       }];
     } else if (category === "SURAT_DINAS_INTERNAL") {
@@ -301,7 +301,6 @@ export function ImportLettersModal({ onClose, onSuccess }: ImportLettersModalPro
       } else if (isNaN(Number(row.nominal))) {
         errors.push("Nominal bukan angka.");
       }
-      if (!row.paraf) errors.push("Paraf kosong.");
     } else if (category === "SURAT_DINAS_INTERNAL") {
       if (!row.type || (row.type !== "MASUK" && row.type !== "KELUAR")) {
         errors.push("Tipe wajib 'MASUK'/'KELUAR'.");
