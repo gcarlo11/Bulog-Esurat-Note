@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useCallback } from "react";
 import { getAuditLogs } from "@/actions/letters";
-import { ShieldCheck, FileText, ArrowLeft, ArrowRight, Key } from "lucide-react";
+import { ShieldCheck, ArrowLeft, ArrowRight, Key, Clock, User, FileText, Activity } from "lucide-react";
 
 interface AuditLogEntry {
   id: string;
@@ -15,26 +15,103 @@ interface AuditLogEntry {
   letter: { letterNumber: string; subject: string } | null;
 }
 
-function formatDateTime(date: Date) {
-  return new Date(date).toLocaleDateString("id-ID", {
+function formatDateTime(dateStr: Date) {
+  const d = new Date(dateStr);
+  const dateFormatted = d.toLocaleDateString("id-ID", {
     day: "2-digit",
     month: "short",
     year: "numeric",
+  });
+  const timeFormatted = d.toLocaleTimeString("id-ID", {
     hour: "2-digit",
     minute: "2-digit",
-    second: "2-digit",
-  });
+    hour12: false,
+  }).replace(":", ".");
+
+  return { dateFormatted, timeFormatted };
 }
 
-function getActionLabel(action: string) {
-  const map: Record<string, string> = {
-    CREATE: "Registrasi Surat",
-    UPDATE: "Modifikasi Surat",
-    ARCHIVE: "Arsip Surat",
-    LOGIN: "Sesi Masuk",
-    LOGOUT: "Sesi Keluar",
-  };
-  return map[action] || action;
+function renderActionBadge(action: string) {
+  switch (action) {
+    case "CREATE":
+      return (
+        <span className="type-badge" style={{ backgroundColor: "rgba(16, 185, 129, 0.12)", color: "#059669", border: "1px solid rgba(16, 185, 129, 0.3)" }}>
+          Registrasi Surat
+        </span>
+      );
+    case "UPDATE":
+      return (
+        <span className="type-badge" style={{ backgroundColor: "rgba(59, 130, 246, 0.12)", color: "#2563eb", border: "1px solid rgba(59, 130, 246, 0.3)" }}>
+          Modifikasi Surat
+        </span>
+      );
+    case "ARCHIVE":
+      return (
+        <span className="type-badge" style={{ backgroundColor: "rgba(107, 114, 128, 0.12)", color: "#4b5563", border: "1px solid rgba(107, 114, 128, 0.3)" }}>
+          Arsip Surat
+        </span>
+      );
+    case "LOGIN":
+      return (
+        <span className="type-badge" style={{ backgroundColor: "rgba(16, 185, 129, 0.1)", color: "#10b981", border: "1px solid rgba(16, 185, 129, 0.25)" }}>
+          Sesi Masuk
+        </span>
+      );
+    case "LOGOUT":
+      return (
+        <span className="type-badge" style={{ backgroundColor: "rgba(156, 163, 175, 0.15)", color: "#6b7280", border: "1px solid rgba(156, 163, 175, 0.3)" }}>
+          Sesi Keluar
+        </span>
+      );
+    case "CREATE_USER":
+      return (
+        <span className="type-badge" style={{ backgroundColor: "rgba(147, 51, 234, 0.12)", color: "#7c3aed", border: "1px solid rgba(147, 51, 234, 0.3)" }}>
+          Buat User Baru
+        </span>
+      );
+    case "ENABLE_USER":
+      return (
+        <span className="type-badge" style={{ backgroundColor: "rgba(16, 185, 129, 0.15)", color: "#047857", border: "1px solid rgba(16, 185, 129, 0.35)" }}>
+          Aktifkan User
+        </span>
+      );
+    case "DISABLE_USER":
+      return (
+        <span className="type-badge" style={{ backgroundColor: "rgba(239, 68, 68, 0.12)", color: "#dc2626", border: "1px solid rgba(239, 68, 68, 0.3)" }}>
+          Nonaktifkan User
+        </span>
+      );
+    case "RESET_PASSWORD_USER":
+      return (
+        <span className="type-badge" style={{ backgroundColor: "rgba(245, 158, 11, 0.12)", color: "#d97706", border: "1px solid rgba(245, 158, 11, 0.3)" }}>
+          Reset Password
+        </span>
+      );
+    default:
+      return (
+        <span className="type-badge" style={{ backgroundColor: "var(--bg-secondary)", color: "var(--text-secondary)" }}>
+          {action}
+        </span>
+      );
+  }
+}
+
+function formatLogDetails(log: AuditLogEntry) {
+  if (!log.details) return "—";
+  try {
+    const data = JSON.parse(log.details);
+    if (data.targetEmail) {
+      let text = `User: ${data.targetEmail}`;
+      if (data.targetRole) text += ` • Role: ${data.targetRole}`;
+      return text;
+    }
+    if (data.reason) return `Alasan: ${data.reason}`;
+    if (data.email) return `Email: ${data.email}`;
+    if (typeof data === "string") return data;
+    return JSON.stringify(data);
+  } catch {
+    return log.details;
+  }
 }
 
 export default function AuditLogsPage() {
@@ -101,7 +178,8 @@ export default function AuditLogsPage() {
       <div className="table-wrapper" style={{ border: "1px solid var(--border-default)" }}>
         <div style={{ display: "flex", flexWrap: "wrap", alignItems: "center", justifyContent: "space-between", padding: "12px 16px", borderBottom: "1px solid var(--border-default)", gap: "12px" }}>
           <div style={{ display: "flex", gap: "12px", alignItems: "center", flexWrap: "wrap", width: "100%" }}>
-            <div style={{ fontSize: "13px", fontWeight: 600, color: "var(--text-primary)" }}>
+            <div style={{ fontSize: "13px", fontWeight: 600, color: "var(--text-primary)", display: "flex", alignItems: "center", gap: "6px" }}>
+              <Activity size={16} style={{ color: "var(--brand-primary)" }} />
               Log Aktivitas Keamanan
             </div>
             
@@ -216,63 +294,59 @@ export default function AuditLogsPage() {
               <thead>
                 <tr>
                   <th>Waktu</th>
-                  <th>Aksi</th>
-                  <th>Aktor</th>
+                  <th>Aksi Aktivitas</th>
+                  <th>Aktor (Pelaksana)</th>
                   <th>Dokumen Terkait</th>
                   <th>Detail Catatan</th>
                 </tr>
               </thead>
               <tbody>
-                {logs.map((log) => (
-                  <tr key={log.id}>
-                    <td style={{ whiteSpace: "nowrap", fontSize: "12px" }} className="mono">
-                      {formatDateTime(log.createdAt)}
-                    </td>
-                    <td>
-                      <span style={{ fontWeight: 600, fontSize: "12px" }}>
-                        {getActionLabel(log.action)}
-                      </span>
-                    </td>
-                    <td>
-                      <div style={{ fontWeight: 500, color: "var(--text-primary)" }}>
-                        {log.user.name}
-                      </div>
-                      <div style={{ fontSize: "11px", color: "var(--text-tertiary)" }}>
-                        {log.user.email}
-                      </div>
-                    </td>
-                    <td>
-                      {log.letter ? (
-                        <div>
-                          <div style={{ fontWeight: 500, color: "var(--text-primary)", fontSize: "13px" }}>
-                            {log.letter.letterNumber}
-                          </div>
-                          <div style={{ fontSize: "11px", color: "var(--text-tertiary)", maxWidth: "180px", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
-                            {log.letter.subject}
-                          </div>
+                {logs.map((log) => {
+                  const { dateFormatted, timeFormatted } = formatDateTime(log.createdAt);
+                  return (
+                    <tr key={log.id}>
+                      <td style={{ whiteSpace: "nowrap" }}>
+                        <div style={{ fontWeight: 600, fontSize: "12px", color: "var(--text-primary)" }}>
+                          {dateFormatted}
                         </div>
-                      ) : (
-                        <span style={{ color: "var(--text-tertiary)" }}>—</span>
-                      )}
-                    </td>
-                    <td>
-                      {log.details ? (
-                        <div className="mono" style={{ fontSize: "11px", color: "var(--text-tertiary)", maxWidth: "250px", wordBreak: "break-all" }}>
-                          {(() => {
-                            try {
-                              const d = JSON.parse(log.details);
-                              if (d.reason) return `Alasan: ${d.reason}`;
-                              if (d.email) return `Email: ${d.email}`;
-                              return JSON.stringify(d);
-                            } catch { return log.details; }
-                          })()}
+                        <div style={{ fontSize: "11px", color: "var(--text-tertiary)", display: "flex", alignItems: "center", gap: "3px" }} className="mono">
+                          <Clock size={10} />
+                          {timeFormatted} WIB
                         </div>
-                      ) : (
-                        <span style={{ color: "var(--text-tertiary)" }}>—</span>
-                      )}
-                    </td>
-                  </tr>
-                ))}
+                      </td>
+                      <td>
+                        {renderActionBadge(log.action)}
+                      </td>
+                      <td>
+                        <div style={{ fontWeight: 600, fontSize: "13px", color: "var(--text-primary)" }}>
+                          {log.user.name}
+                        </div>
+                        <div style={{ fontSize: "11px", color: "var(--text-tertiary)" }}>
+                          {log.user.email}
+                        </div>
+                      </td>
+                      <td>
+                        {log.letter ? (
+                          <div>
+                            <div style={{ fontWeight: 600, color: "var(--text-primary)", fontSize: "12px" }} className="mono">
+                              {log.letter.letterNumber}
+                            </div>
+                            <div style={{ fontSize: "11px", color: "var(--text-tertiary)", maxWidth: "180px", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                              {log.letter.subject}
+                            </div>
+                          </div>
+                        ) : (
+                          <span style={{ color: "var(--text-tertiary)", fontSize: "12px" }}>—</span>
+                        )}
+                      </td>
+                      <td>
+                        <div style={{ fontSize: "12px", color: "var(--text-secondary)", fontWeight: 500 }}>
+                          {formatLogDetails(log)}
+                        </div>
+                      </td>
+                    </tr>
+                  );
+                })}
               </tbody>
             </table>
 

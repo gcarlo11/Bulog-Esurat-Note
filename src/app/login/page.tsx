@@ -214,54 +214,8 @@ export default function LoginPage() {
               </Button>
             </form>
 
-            {/* Divider */}
-            <div className="relative py-1">
-              <div className="absolute inset-0 flex items-center">
-                <span className="w-full border-t border-zinc-200 dark:border-zinc-800" />
-              </div>
-              <div className="relative flex justify-center text-[10px] uppercase font-bold tracking-wider">
-                <span className="bg-white px-2 text-zinc-500 dark:bg-[#0c0c11] dark:text-zinc-400 transition-colors duration-500">Akun Demo</span>
-              </div>
-            </div>
-
-            {/* Demo Account Quick-Fill Buttons */}
-            <div className="grid grid-cols-3 gap-2">
-              {DEMO_ACCOUNTS.map((acc) => (
-                <button
-                  key={acc.role}
-                  type="button"
-                  onClick={() => fillDemo(acc)}
-                  className={`text-xs font-semibold px-2 py-1.5 rounded-lg border transition-all duration-150 ${acc.color}`}
-                >
-                  {acc.role}
-                </button>
-              ))}
-            </div>
-
-            {/* Seed Button */}
-            <Button
-              type="button"
-              variant="outline"
-              size="sm"
-              onClick={handleSeed}
-              disabled={seeding}
-              className="w-full border-zinc-200 dark:border-zinc-800 bg-white/20 dark:bg-zinc-950/20 text-zinc-700 dark:text-zinc-300 hover:bg-zinc-100 dark:hover:bg-zinc-800 hover:text-zinc-950 dark:hover:text-white text-xs h-9"
-            >
-              {seeding ? (
-                <>
-                  <Loader2 size={12} className="animate-spin" />
-                  Membuat akun...
-                </>
-              ) : (
-                <>
-                  <RefreshCw size={12} />
-                  Inisialisasi Akun Demo
-                </>
-              )}
-            </Button>
-
             {/* Security/Log Information */}
-            <div className="flex items-center justify-center gap-1 text-[10px] text-zinc-500 dark:text-zinc-500 font-medium">
+            <div className="flex items-center justify-center gap-1 text-[10px] text-zinc-500 dark:text-zinc-500 font-medium pt-2">
               <ShieldCheck size={11} />
               <span>Dilindungi kriptografi JWT HS256 &amp; hash bcrypt</span>
             </div>

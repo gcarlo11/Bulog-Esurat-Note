@@ -64,6 +64,12 @@ export async function logoutAction() {
   const session = await getSession();
 
   if (session) {
+    // Invalidate active session in database
+    await prisma.user.update({
+      where: { id: session.userId },
+      data: { activeSessionId: null },
+    });
+
     await prisma.auditLog.create({
       data: {
         action: "LOGOUT",

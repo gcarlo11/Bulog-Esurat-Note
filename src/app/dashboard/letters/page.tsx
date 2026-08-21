@@ -287,15 +287,17 @@ export default function LettersPage() {
 
           {canEdit(user.role) && (
             <>
-              <button
-                className="btn btn-secondary btn-sm"
-                onClick={() => setShowImportModal(true)}
-                title="Impor Data dari Excel"
-                style={{ display: "flex", alignItems: "center", gap: "4px" }}
-              >
-                <Upload size={14} />
-                Impor Data
-              </button>
+              {user.role === "ADMIN" && (
+                <button
+                  className="btn btn-secondary btn-sm"
+                  onClick={() => setShowImportModal(true)}
+                  title="Impor Data dari Excel"
+                  style={{ display: "flex", alignItems: "center", gap: "4px" }}
+                >
+                  <Upload size={14} />
+                  Impor Data
+                </button>
+              )}
               <button className="btn btn-primary btn-sm" onClick={() => setShowModal(true)}>
                 <Plus size={14} />
                 Registrasi Dokumen

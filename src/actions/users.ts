@@ -94,6 +94,27 @@ export async function toggleUserStatusAction(userId: string, isActive: boolean) 
       return { error: "Anda tidak dapat menonaktifkan akun Anda sendiri." };
     }
 
+    const targetUser = await prisma.user.findUnique({
+      where: { id: userId },
+      select: { role: true, email: true },
+    });
+
+    if (!targetUser) {
+      return { error: "Pengguna tidak ditemukan." };
+    }
+
+    const isSuperAdmin = admin.email.toLowerCase() === "admin@esurat.local";
+
+    // Proteksi Keamanan Hierarchy: Akun Admin Utama (Super Admin) & Sesama Admin
+    if (targetUser.role === "ADMIN") {
+      if (targetUser.email.toLowerCase() === "admin@esurat.local") {
+        return { error: "Akun Super Admin Utama tidak dapat dinonaktifkan." };
+      }
+      if (!isSuperAdmin) {
+        return { error: "Hanya Super Admin Utama yang berhak mengubah status akun Admin lainnya." };
+      }
+    }
+
     // Jika dinonaktifkan, kosongkan activeSessionId agar otomatis logout
     const updateData: { isActive: boolean; activeSessionId?: null } = { isActive };
     if (!isActive) {
@@ -134,6 +155,22 @@ export async function resetUserPasswordAction(userId: string, newPassword: strin
 
     if (!newPassword || newPassword.trim().length < 6) {
       return { error: "Password baru minimal harus 6 karakter." };
+    }
+
+    const targetUser = await prisma.user.findUnique({
+      where: { id: userId },
+      select: { role: true, email: true },
+    });
+
+    if (!targetUser) {
+      return { error: "Pengguna tidak ditemukan." };
+    }
+
+    const isSuperAdmin = admin.email.toLowerCase() === "admin@esurat.local";
+
+    // Proteksi Keamanan: Hanya Super Admin atau diri sendiri yang boleh mereset password Admin
+    if (targetUser.role === "ADMIN" && userId !== admin.id && !isSuperAdmin) {
+      return { error: "Hanya Super Admin Utama yang berhak mereset password akun Admin lainnya." };
     }
 
     const hashedPassword = await hashPassword(newPassword);
