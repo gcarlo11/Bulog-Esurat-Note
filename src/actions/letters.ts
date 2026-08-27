@@ -2,6 +2,7 @@
 
 import { prisma } from "@/lib/prisma";
 import { requireRole, getAuthenticatedUser } from "@/lib/auth";
+import { isDivisionLetterCategory, isValidDivisionUnit } from "@/lib/divisions";
 import { revalidatePath } from "next/cache";
 
 // Helper: Generate Nomor Surat Otomatis
@@ -46,7 +47,8 @@ async function generateLetterNumber(
   category: string,
   letterDate: Date,
   agendaType?: string,
-  type?: string
+  type?: string,
+  divisionUnit?: string
 ): Promise<string> {
   const now = new Date();
   let prefix = "DOC";
@@ -87,6 +89,7 @@ async function generateLetterNumber(
       category,
       agendaType: category === "AGENDA" ? agendaType : undefined,
       type: category === "KELUAR_MASUK" ? type : undefined,
+      divisionUnit: isDivisionLetterCategory(category) ? divisionUnit : undefined,
       status: "ACTIVE",
       letterDate: {
         gte: startOfYear,
@@ -179,6 +182,20 @@ async function generateLetterNumber(
   }
 }
 
+async function findExistingLetterNumber(
+  letterNumber: string,
+  category: string,
+  divisionUnit?: string
+) {
+  return prisma.letter.findFirst({
+    where: {
+      letterNumber,
+      category: isDivisionLetterCategory(category) ? category : undefined,
+      divisionUnit: isDivisionLetterCategory(category) ? divisionUnit : undefined,
+    },
+  });
+}
+
 // ============================================
 // Helper: Catat Audit Log
 // ============================================
@@ -231,6 +248,7 @@ export async function createLetterAction(formData: FormData) {
 
   const nominalStr = formData.get("nominal") as string; // NOTA_VERIFIKASI
   const paraf = formData.get("paraf") as string; // NOTA_VERIFIKASI
+  const divisionUnit = formData.get("divisionUnit") as string; // NOTA_VERIFIKASI, NOTA_DIVISI
 
   // Field Spesifik Surat Dinas Internal
   const sdiNomor = formData.get("sdiNomor") as string;
@@ -256,8 +274,12 @@ export async function createLetterAction(formData: FormData) {
       return { error: "Field Tipe, Pengirim, Penerima, Perihal, dan Tanggal wajib diisi." };
     }
   } else if (category === "NOTA_VERIFIKASI") {
-    if (!subject || !letterDate || !nominalStr) {
-      return { error: "Field Perihal, Tanggal, dan Nominal wajib diisi." };
+    if (!subject || !letterDate || !nominalStr || !isValidDivisionUnit(divisionUnit)) {
+      return { error: "Field Divisi / Unit, Perihal, Tanggal, dan Nominal wajib diisi." };
+    }
+  } else if (category === "NOTA_DIVISI") {
+    if (!subject || !letterDate || !nominalStr || !isValidDivisionUnit(divisionUnit)) {
+      return { error: "Field Divisi / Unit, Keterangan, Tanggal, dan Jumlah wajib diisi." };
     }
   } else if (category === "SURAT_DINAS_INTERNAL") {
     if (!type || !subject || !letterDate || !sender || !recipient) {
@@ -271,7 +293,7 @@ export async function createLetterAction(formData: FormData) {
   if (customLetterNumber && customLetterNumber.trim()) {
     letterNumber = customLetterNumber.trim();
     // Periksa keunikan nomor surat manual
-    const existing = await prisma.letter.findUnique({ where: { letterNumber } });
+    const existing = await findExistingLetterNumber(letterNumber, category, divisionUnit);
     if (existing) {
       return { error: `Nomor surat "${letterNumber}" sudah terdaftar di sistem. Harap gunakan nomor yang berbeda.` };
     }
@@ -282,18 +304,19 @@ export async function createLetterAction(formData: FormData) {
     letterNumber = `SDI-${num}/06040/${div}/${dt}`;
 
     // Periksa keunikan nomor surat manual SDI
-    const existing = await prisma.letter.findUnique({ where: { letterNumber } });
+    const existing = await findExistingLetterNumber(letterNumber, category, divisionUnit);
     if (existing) {
       return { error: `Nomor surat "${letterNumber}" sudah terdaftar di sistem. Harap gunakan nomor urut yang berbeda.` };
     }
   } else {
-    letterNumber = await generateLetterNumber(category, new Date(letterDate), agendaType, type);
+    letterNumber = await generateLetterNumber(category, new Date(letterDate), agendaType, type, divisionUnit);
   }
 
   const letter = await prisma.letter.create({
     data: {
       letterNumber,
       category,
+      divisionUnit: isDivisionLetterCategory(category) ? divisionUnit : null,
       type: (category === "KELUAR_MASUK" || category === "SURAT_DINAS_INTERNAL") ? type : null,
       subject,
       sender: (category === "KELUAR_MASUK" || category === "SURAT_DINAS_INTERNAL") ? sender : null,
@@ -327,6 +350,7 @@ export async function createLetterAction(formData: FormData) {
     details: {
       letterNumber,
       category,
+      divisionUnit: isDivisionLetterCategory(category) ? divisionUnit : null,
       subject,
     },
   });
@@ -363,6 +387,7 @@ export async function updateLetterAction(
       version: versionCount + 1,
       letterId,
       category: letter.category,
+      divisionUnit: letter.divisionUnit,
       type: letter.type,
       subject: letter.subject,
       sender: letter.sender,
@@ -401,6 +426,7 @@ export async function updateLetterAction(
   const nomorPetunjuk = formData.get("nomorPetunjuk") as string;
   const nominalStr = formData.get("nominal") as string;
   const paraf = formData.get("paraf") as string;
+  const divisionUnit = formData.get("divisionUnit") as string;
   const tembusan = formData.get("tembusan") as string;
   const jumlahLembar = formData.get("jumlahLembar") as string;
 
@@ -417,6 +443,9 @@ export async function updateLetterAction(
     where: { id: letterId },
     data: {
       type: (letter.category === "KELUAR_MASUK" || letter.category === "SURAT_DINAS_INTERNAL") ? (type || letter.type) : null,
+      divisionUnit: isDivisionLetterCategory(letter.category)
+        ? (isValidDivisionUnit(divisionUnit) ? divisionUnit : letter.divisionUnit)
+        : null,
       subject: subject || letter.subject,
       sender: (letter.category === "KELUAR_MASUK" || letter.category === "SURAT_DINAS_INTERNAL") ? (sender || letter.sender) : null,
       recipient: letter.category === "NOTA_VERIFIKASI" ? null : (recipient || letter.recipient),
@@ -555,6 +584,7 @@ export async function getLetters(params?: {
   month?: number;
   year?: number;
   agendaType?: string;
+  divisionUnit?: string;
 }) {
   await getAuthenticatedUser();
 
@@ -572,6 +602,9 @@ export async function getLetters(params?: {
   }
   if (params?.agendaType && params.agendaType !== "ALL") {
     where.agendaType = params.agendaType;
+  }
+  if (params?.divisionUnit && params.divisionUnit !== "ALL") {
+    where.divisionUnit = params.divisionUnit;
   }
   if (params?.status && params.status !== "ALL") {
     where.status = params.status;
@@ -803,6 +836,7 @@ export async function getLettersForExport(params?: {
   month?: number;
   year?: number;
   agendaType?: string;
+  divisionUnit?: string;
 }) {
   await getAuthenticatedUser();
 
@@ -818,6 +852,9 @@ export async function getLettersForExport(params?: {
   }
   if (params?.agendaType && params.agendaType !== "ALL") {
     where.agendaType = params.agendaType;
+  }
+  if (params?.divisionUnit && params.divisionUnit !== "ALL") {
+    where.divisionUnit = params.divisionUnit;
   }
 
   const dateFilter = buildDateFilter(params?.startDate, params?.endDate, params?.month, params?.year);

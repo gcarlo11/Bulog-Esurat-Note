@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { createLetterAction } from "@/actions/letters";
+import { DIVISION_UNITS, getDivisionUnitLabel, isValidDivisionUnit } from "@/lib/divisions";
 import { X, Upload, FileSpreadsheet, Check, AlertTriangle, Play } from "lucide-react";
 import * as XLSX from "xlsx";
 
@@ -34,6 +35,14 @@ const categoryLabels: Record<string, string> = {
   NOTA_DIVISI: "Nota Internal / Divisi",
   SURAT_DINAS_INTERNAL: "Surat Dinas Internal",
 };
+
+function normalizeDivisionUnit(value: string) {
+  const clean = value.trim();
+  if (isValidDivisionUnit(clean)) return clean;
+
+  const byLabel = DIVISION_UNITS.find((unit) => unit.label.toLowerCase() === clean.toLowerCase());
+  return byLabel?.value || clean;
+}
 
 export function ImportLettersModal({ onClose, onSuccess }: ImportLettersModalProps) {
   const [category, setCategory] = useState<"KELUAR_MASUK" | "AGENDA" | "NOTA_VERIFIKASI" | "NOTA_DIVISI" | "SURAT_DINAS_INTERNAL">(
@@ -99,6 +108,7 @@ export function ImportLettersModal({ onClose, onSuccess }: ImportLettersModalPro
     } else if (category === "NOTA_VERIFIKASI" || category === "NOTA_DIVISI") {
       headers = [
         "Nomor Surat (Opsional)",
+        "Divisi / Unit (Enum)",
         "Tanggal Surat (YYYY-MM-DD)",
         "Perihal",
         "Nominal (Angka saja)",
@@ -107,6 +117,7 @@ export function ImportLettersModal({ onClose, onSuccess }: ImportLettersModalPro
       ];
       sampleData = [{
         "Nomor Surat (Opsional)": "V/ND-001",
+        "Divisi / Unit (Enum)": "MINKU_TU",
         "Tanggal Surat (YYYY-MM-DD)": "2026-06-01",
         "Perihal": "Reimburse Uang Jalan",
         "Nominal (Angka saja)": "150000",
@@ -233,6 +244,14 @@ export function ImportLettersModal({ onClose, onSuccess }: ImportLettersModalPro
       const code = getVal(["Kode Arsip", "Kode"]);
       const nominal = getVal(["Nominal (Angka saja)", "Nominal", "Jumlah (Rp)", "Amount"]);
       const paraf = getVal(["Paraf/Disetujui Oleh", "Paraf", "Disetujui Oleh"]);
+      const divisionUnit = normalizeDivisionUnit(getVal([
+        "Divisi / Unit (Enum)",
+        "Divisi / Unit",
+        "Division Unit",
+        "divisionUnit",
+        "Divisi",
+        "Unit"
+      ]));
       const sdiNomor = getVal(["Nomor Urut SDI (Angka, Contoh: 001)", "Nomor Urut SDI", "Nomor Urut"]);
       const sdiKodeDivisi = getVal(["Kode Divisi SDI (Contoh: SPI)", "Kode Divisi SDI", "Kode Divisi"]);
       const sdiNoTanggal = getVal(["No/Tanggal Suffix SDI (Contoh: 01)", "No/Tanggal Suffix SDI", "Suffix"]);
@@ -256,6 +275,7 @@ export function ImportLettersModal({ onClose, onSuccess }: ImportLettersModalPro
         code,
         nominal,
         paraf,
+        divisionUnit,
         sdiNomor,
         sdiKodeDivisi,
         sdiNoTanggal,
@@ -296,6 +316,9 @@ export function ImportLettersModal({ onClose, onSuccess }: ImportLettersModalPro
       }
       if (!row.recipient) errors.push("Tujuan kosong.");
     } else if (category === "NOTA_VERIFIKASI" || category === "NOTA_DIVISI") {
+      if (!isValidDivisionUnit(row.divisionUnit)) {
+        errors.push("Divisi / Unit wajib salah satu enum yang valid.");
+      }
       if (!row.nominal) {
         errors.push("Nominal kosong.");
       } else if (isNaN(Number(row.nominal))) {
@@ -360,6 +383,7 @@ export function ImportLettersModal({ onClose, onSuccess }: ImportLettersModalPro
       if (category === "NOTA_VERIFIKASI" || category === "NOTA_DIVISI") {
         formData.append("nominal", row.nominal);
         formData.append("paraf", row.paraf);
+        formData.append("divisionUnit", row.divisionUnit);
       }
       if (category === "SURAT_DINAS_INTERNAL") {
         formData.append("sdiNomor", row.sdiNomor);
@@ -509,6 +533,9 @@ export function ImportLettersModal({ onClose, onSuccess }: ImportLettersModalPro
                       <tr style={{ background: "var(--bg-subtle)", position: "sticky", top: 0, zIndex: 1 }}>
                         <th style={{ padding: "8px", borderBottom: "1px solid var(--border-default)", width: "50px" }}>No</th>
                         <th style={{ padding: "8px", borderBottom: "1px solid var(--border-default)", textAlign: "left" }}>Tanggal</th>
+                        {(category === "NOTA_VERIFIKASI" || category === "NOTA_DIVISI") && (
+                          <th style={{ padding: "8px", borderBottom: "1px solid var(--border-default)", textAlign: "left" }}>Divisi</th>
+                        )}
                         <th style={{ padding: "8px", borderBottom: "1px solid var(--border-default)", textAlign: "left" }}>Perihal</th>
                         <th style={{ padding: "8px", borderBottom: "1px solid var(--border-default)", width: "100px" }}>Status</th>
                       </tr>
@@ -518,6 +545,9 @@ export function ImportLettersModal({ onClose, onSuccess }: ImportLettersModalPro
                         <tr key={row.index} style={{ borderBottom: "1px solid var(--border-default)" }}>
                           <td style={{ padding: "8px", textAlign: "center" }}>{row.index}</td>
                           <td style={{ padding: "8px" }}>{row.letterDate || "-"}</td>
+                          {(category === "NOTA_VERIFIKASI" || category === "NOTA_DIVISI") && (
+                            <td style={{ padding: "8px" }}>{getDivisionUnitLabel(row.divisionUnit)}</td>
+                          )}
                           <td style={{ padding: "8px" }}>{row.subject || "-"}</td>
                           <td style={{ padding: "8px", textAlign: "center" }}>
                             {row.errors.length === 0 ? (

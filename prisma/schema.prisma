@@ -36,8 +36,9 @@ model User {
 // ============================================
 model Letter {
   id              String   @id @default(uuid())
-  letterNumber    String   @unique // Nomor surat otomatis
+  letterNumber    String   // Nomor surat otomatis
   category        String   @default("KELUAR_MASUK") // AGENDA, KELUAR_MASUK, NOTA_VERIFIKASI
+  divisionUnit    String?  // MINKU_TU, MINKU_SDM, MINKU_AKUNTANSI, BISNIS, PENGADAAN, OPP
   type            String?  // MASUK atau KELUAR (untuk KELUAR_MASUK)
   subject         String   // Perihal surat / dokumen
   sender          String?  // Pengirim (untuk surat masuk)
@@ -75,6 +76,9 @@ model Letter {
   // Relasi ke versi dan log
   versions        LetterVersion[]
   auditLogs       AuditLog[]
+
+  @@index([letterNumber])
+  @@index([category, divisionUnit, letterNumber])
 }
 
 // ============================================
@@ -89,6 +93,7 @@ model LetterVersion {
 
   // Snapshot data surat saat itu
   category        String   @default("KELUAR_MASUK")
+  divisionUnit    String?
   type            String?
   subject         String
   sender          String?

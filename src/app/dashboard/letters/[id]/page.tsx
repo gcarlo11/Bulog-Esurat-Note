@@ -10,6 +10,7 @@ import {
 import Link from "next/link";
 import { useUser, canEdit, canArchive } from "@/components/UserProvider";
 import { generateLetterHash } from "@/lib/hash";
+import { DIVISION_UNITS, getDivisionUnitLabel, isDivisionLetterCategory } from "@/lib/divisions";
 import {
   ArrowLeft,
   Edit2,
@@ -30,6 +31,7 @@ interface LetterVersion {
   id: string;
   version: number;
   category: string;
+  divisionUnit: string | null;
   type: string | null;
   subject: string;
   sender: string | null;
@@ -65,6 +67,7 @@ interface LetterDetail {
   id: string;
   letterNumber: string;
   category: string;
+  divisionUnit: string | null;
   type: string | null;
   subject: string;
   sender: string | null;
@@ -262,6 +265,7 @@ export default function LetterDetailPage() {
     subject: letter.subject,
     sender: letter.sender || "",
     recipient: letter.recipient || "",
+    divisionUnit: letter.divisionUnit || "",
     letterDate: letter.letterDate,
   });
 
@@ -284,6 +288,11 @@ export default function LetterDetailPage() {
             {(letter.category === "KELUAR_MASUK" || letter.category === "SURAT_DINAS_INTERNAL") && letter.type && (
               <span className={`type-badge type-${letter.type.toLowerCase()}`}>
                 {letter.type === "MASUK" ? "Masuk" : "Keluar"}
+              </span>
+            )}
+            {isDivisionLetterCategory(letter.category) && (
+              <span style={{ fontSize: "11px", fontWeight: 600, color: "var(--text-secondary)", background: "var(--bg-muted)", padding: "2px 8px", borderRadius: "4px" }}>
+                {getDivisionUnitLabel(letter.divisionUnit)}
               </span>
             )}
             <span className={`status-badge status-${letter.status.toLowerCase()}`}>
@@ -456,6 +465,10 @@ export default function LetterDetailPage() {
               {letter.category === "NOTA_DIVISI" && (
                 <>
                   <div className="detail-item">
+                    <div className="detail-label">Divisi / Unit</div>
+                    <div className="detail-value">{getDivisionUnitLabel(letter.divisionUnit)}</div>
+                  </div>
+                  <div className="detail-item">
                     <div className="detail-label">Jumlah</div>
                     <div className="detail-value" style={{ fontWeight: 700, fontSize: "16px", color: "var(--text-primary)" }}>
                       {letter.nominal ? formatRupiah(letter.nominal) : "—"}
@@ -478,6 +491,10 @@ export default function LetterDetailPage() {
               {/* SPECIFIC FIELDS: NOTA VERIFIKASI */}
               {letter.category === "NOTA_VERIFIKASI" && (
                 <>
+                  <div className="detail-item">
+                    <div className="detail-label">Divisi / Unit</div>
+                    <div className="detail-value">{getDivisionUnitLabel(letter.divisionUnit)}</div>
+                  </div>
                   <div className="detail-item">
                     <div className="detail-label">Nominal Verifikasi</div>
                     <div className="detail-value" style={{ fontWeight: 700, fontSize: "16px", color: "var(--text-primary)" }}>
@@ -600,6 +617,7 @@ export default function LetterDetailPage() {
 
                     {(letter.category === "NOTA_VERIFIKASI" || letter.category === "NOTA_DIVISI") && (
                       <>
+                        <div><strong>Divisi / Unit:</strong> {getDivisionUnitLabel(v.divisionUnit)}</div>
                         <div><strong>Jumlah / Nominal:</strong> {v.nominal ? formatRupiah(v.nominal) : "—"}</div>
                         <div><strong>TTD / Paraf:</strong> {v.paraf || "—"}</div>
                       </>
@@ -810,6 +828,14 @@ export default function LetterDetailPage() {
               {letter.category === "NOTA_DIVISI" && (
                 <>
                   <div className="form-group">
+                    <label className="form-label" htmlFor="divisionUnit">Divisi / Unit *</label>
+                    <select id="divisionUnit" name="divisionUnit" className="form-select" defaultValue={letter.divisionUnit || "MINKU_TU"} required>
+                      {DIVISION_UNITS.map((unit) => (
+                        <option key={unit.value} value={unit.value}>{unit.label}</option>
+                      ))}
+                    </select>
+                  </div>
+                  <div className="form-group">
                     <label className="form-label" htmlFor="subject">Keterangan Nota *</label>
                     <input id="subject" name="subject" className="form-input" defaultValue={letter.subject} required />
                   </div>
@@ -840,6 +866,14 @@ export default function LetterDetailPage() {
               {/* SPECIFIC FIELDS FOR NOTA VERIFIKASI */}
               {letter.category === "NOTA_VERIFIKASI" && (
                 <>
+                  <div className="form-group">
+                    <label className="form-label" htmlFor="divisionUnit">Divisi / Unit *</label>
+                    <select id="divisionUnit" name="divisionUnit" className="form-select" defaultValue={letter.divisionUnit || "MINKU_TU"} required>
+                      {DIVISION_UNITS.map((unit) => (
+                        <option key={unit.value} value={unit.value}>{unit.label}</option>
+                      ))}
+                    </select>
+                  </div>
                   <div className="form-group">
                     <label className="form-label" htmlFor="subject">Perihal Verifikasi *</label>
                     <input id="subject" name="subject" className="form-input" defaultValue={letter.subject} required />

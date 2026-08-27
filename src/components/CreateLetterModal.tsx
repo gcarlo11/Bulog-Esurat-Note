@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { createLetterAction } from "@/actions/letters";
+import { DIVISION_UNITS, getDivisionUnitLabel, isDivisionLetterCategory } from "@/lib/divisions";
 import { formatFileSize } from "@/lib/fileUtils";
 import { X, Save, AlertCircle, Upload, Paperclip, CheckCircle2, Copy, Check } from "lucide-react";
 
@@ -33,6 +34,7 @@ export function CreateLetterModal({ onClose, onSuccess, defaultCategory }: Creat
     defaultCategory || "KELUAR_MASUK"
   );
   const [letterType, setLetterType] = useState("MASUK");
+  const [divisionUnit, setDivisionUnit] = useState("MINKU_TU");
   const [nominalRaw, setNominalRaw] = useState("");
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
@@ -149,6 +151,7 @@ export function CreateLetterModal({ onClose, onSuccess, defaultCategory }: Creat
     formData.set("category", category);
     if (category === "NOTA_VERIFIKASI" || category === "NOTA_DIVISI") {
       formData.set("nominal", nominalRaw.replace(/\./g, ""));
+      formData.set("divisionUnit", divisionUnit);
     }
 
     if (compressedFile) {
@@ -253,6 +256,15 @@ export function CreateLetterModal({ onClose, onSuccess, defaultCategory }: Creat
                   <span style={{ color: "var(--text-tertiary)", fontWeight: 500 }}>Tipe Surat</span>
                   <span className={`type-badge type-${successData.type.toLowerCase()}`}>
                     {successData.type === "MASUK" ? "Surat Masuk" : "Surat Keluar"}
+                  </span>
+                </div>
+              )}
+
+              {isDivisionLetterCategory(successData.category) && (
+                <div style={{ display: "flex", justifyContent: "space-between", borderBottom: "1px solid var(--border-subtle)", paddingBottom: "8px", gap: "12px" }}>
+                  <span style={{ color: "var(--text-tertiary)", fontWeight: 500 }}>Divisi / Unit</span>
+                  <span style={{ color: "var(--text-primary)", fontWeight: 600, textAlign: "right" }}>
+                    {getDivisionUnitLabel(successData.divisionUnit)}
                   </span>
                 </div>
               )}
@@ -376,6 +388,28 @@ export function CreateLetterModal({ onClose, onSuccess, defaultCategory }: Creat
           </div>
 
           <hr style={{ border: "none", borderTop: "1px solid var(--border-default)", margin: "16px 0" }} />
+
+          {isDivisionLetterCategory(category) && (
+            <div className="form-group">
+              <label className="form-label" htmlFor="divisionUnit">
+                Divisi / Unit *
+              </label>
+              <select
+                id="divisionUnit"
+                name="divisionUnit"
+                className="form-select"
+                value={divisionUnit}
+                onChange={(e) => setDivisionUnit(e.target.value)}
+                required
+              >
+                {DIVISION_UNITS.map((unit) => (
+                  <option key={unit.value} value={unit.value}>
+                    {unit.label}
+                  </option>
+                ))}
+              </select>
+            </div>
+          )}
 
           {/* FORM A: SURAT AGENDA                                     */}
           {category === "AGENDA" && (

@@ -1,6 +1,7 @@
 import * as XLSX from "xlsx";
 import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
+import { getDivisionUnitLabel } from "@/lib/divisions";
 
 // Konfigurasi Kop Surat
 const COMPANY_NAME = "PERUM BULOG";
@@ -12,6 +13,7 @@ interface LetterExportData {
   id: string;
   letterNumber: string;
   category: string;
+  divisionUnit: string | null;
   type: string | null;
   subject: string;
   sender: string | null;
@@ -140,6 +142,7 @@ export function exportToExcel(letters: LetterExportData[], filterLabel: string, 
     columnHeaders = [
       "No",
       "Nomor Nota",
+      "Divisi",
       "Keterangan",
       "Tanggal Nota",
       "Jumlah",
@@ -150,6 +153,7 @@ export function exportToExcel(letters: LetterExportData[], filterLabel: string, 
     dataRows = letters.map((l, i) => [
       i + 1,
       l.letterNumber,
+      getDivisionUnitLabel(l.divisionUnit),
       l.subject,
       formatDateShort(l.letterDate),
       l.nominal ? formatRupiah(l.nominal) : "—",
@@ -161,6 +165,7 @@ export function exportToExcel(letters: LetterExportData[], filterLabel: string, 
     columnHeaders = [
       "No",
       "Nomor Nota",
+      "Divisi",
       "Perihal",
       "Tanggal Verifikasi",
       "Nominal",
@@ -171,6 +176,7 @@ export function exportToExcel(letters: LetterExportData[], filterLabel: string, 
     dataRows = letters.map((l, i) => [
       i + 1,
       l.letterNumber,
+      getDivisionUnitLabel(l.divisionUnit),
       l.subject,
       formatDateShort(l.letterDate),
       l.nominal ? formatRupiah(l.nominal) : "—",
@@ -195,7 +201,8 @@ export function exportToExcel(letters: LetterExportData[], filterLabel: string, 
       let detail = "—";
       if (l.category === "AGENDA") detail = `Jenis: ${l.agendaType}`;
       else if (l.category === "KELUAR_MASUK") detail = `Tipe: ${l.type}`;
-      else if (l.category === "NOTA_VERIFIKASI") detail = `Nominal: ${l.nominal ? formatRupiah(l.nominal) : "—"}`;
+      else if (l.category === "NOTA_VERIFIKASI") detail = `${getDivisionUnitLabel(l.divisionUnit)} | Nominal: ${l.nominal ? formatRupiah(l.nominal) : "—"}`;
+      else if (l.category === "NOTA_DIVISI") detail = `${getDivisionUnitLabel(l.divisionUnit)} | Jumlah: ${l.nominal ? formatRupiah(l.nominal) : "—"}`;
 
       return [
         i + 1,
@@ -373,10 +380,11 @@ export function exportToPdf(letters: LetterExportData[], filterLabel: string, pe
     };
     totalTableWidth = 243;
   } else if (activeCategory === "NOTA_DIVISI") {
-    headers = ["No", "Nomor Nota", "Keterangan", "Tanggal", "Jumlah", "TTD", "Status"];
+    headers = ["No", "Nomor Nota", "Divisi", "Keterangan", "Tanggal", "Jumlah", "TTD", "Status"];
     bodyData = letters.map((l, i) => [
       (i + 1).toString(),
       l.letterNumber,
+      getDivisionUnitLabel(l.divisionUnit),
       l.subject,
       formatDateShort(l.letterDate),
       l.nominal ? formatRupiah(l.nominal) : "—",
@@ -385,19 +393,21 @@ export function exportToPdf(letters: LetterExportData[], filterLabel: string, pe
     ]);
     columnStyles = {
       0: { halign: "center", cellWidth: 12 },
-      1: { cellWidth: 40 },
-      2: { cellWidth: 80 },
-      3: { halign: "center", cellWidth: 30 },
-      4: { halign: "right", cellWidth: 35 },
-      5: { halign: "center", cellWidth: 35 },
-      6: { halign: "center", cellWidth: 20 },
+      1: { cellWidth: 32 },
+      2: { cellWidth: 42 },
+      3: { cellWidth: 58 },
+      4: { halign: "center", cellWidth: 24 },
+      5: { halign: "right", cellWidth: 30 },
+      6: { halign: "center", cellWidth: 32 },
+      7: { halign: "center", cellWidth: 18 },
     };
-    totalTableWidth = 252; // Total: 12+40+80+30+35+35+20 = 252
+    totalTableWidth = 248;
   } else if (activeCategory === "NOTA_VERIFIKASI") {
-    headers = ["No", "Nomor Nota", "Perihal", "Tanggal", "Nominal", "Paraf", "Status"];
+    headers = ["No", "Nomor Nota", "Divisi", "Perihal", "Tanggal", "Nominal", "Paraf", "Status"];
     bodyData = letters.map((l, i) => [
       (i + 1).toString(),
       l.letterNumber,
+      getDivisionUnitLabel(l.divisionUnit),
       l.subject,
       formatDateShort(l.letterDate),
       l.nominal ? formatRupiah(l.nominal) : "—",
@@ -406,22 +416,23 @@ export function exportToPdf(letters: LetterExportData[], filterLabel: string, pe
     ]);
     columnStyles = {
       0: { halign: "center", cellWidth: 12 },
-      1: { cellWidth: 40 },
-      2: { cellWidth: 80 },
-      3: { halign: "center", cellWidth: 30 },
-      4: { halign: "right", cellWidth: 35 },
-      5: { halign: "center", cellWidth: 35 },
-      6: { halign: "center", cellWidth: 20 },
+      1: { cellWidth: 32 },
+      2: { cellWidth: 42 },
+      3: { cellWidth: 58 },
+      4: { halign: "center", cellWidth: 24 },
+      5: { halign: "right", cellWidth: 30 },
+      6: { halign: "center", cellWidth: 32 },
+      7: { halign: "center", cellWidth: 18 },
     };
-    totalTableWidth = 252; // Total: 12+40+80+30+35+35+20 = 252
+    totalTableWidth = 248;
   } else {
     headers = ["No", "Nomor Dokumen", "Kategori", "Perihal", "Penerima/Tujuan", "Tanggal", "Detail Info", "Status"];
     bodyData = letters.map((l, i) => {
       let detail = "—";
       if (l.category === "AGENDA") detail = `Jenis: ${l.agendaType}`;
       else if (l.category === "KELUAR_MASUK") detail = `Tipe: ${l.type}`;
-      else if (l.category === "NOTA_VERIFIKASI") detail = `Nominal: ${l.nominal ? formatRupiah(l.nominal) : "—"}`;
-      else if (l.category === "NOTA_DIVISI") detail = `Jumlah: ${l.nominal ? formatRupiah(l.nominal) : "—"}`;
+      else if (l.category === "NOTA_VERIFIKASI") detail = `${getDivisionUnitLabel(l.divisionUnit)} | Nominal: ${l.nominal ? formatRupiah(l.nominal) : "—"}`;
+      else if (l.category === "NOTA_DIVISI") detail = `${getDivisionUnitLabel(l.divisionUnit)} | Jumlah: ${l.nominal ? formatRupiah(l.nominal) : "—"}`;
 
       return [
         (i + 1).toString(),

@@ -7,6 +7,7 @@ import { getLetters, getLettersForExport } from "@/actions/letters";
 import { CreateLetterModal } from "@/components/CreateLetterModal";
 import { ImportLettersModal } from "@/components/ImportLettersModal";
 import { useUser, canEdit } from "@/components/UserProvider";
+import { DIVISION_UNITS, getDivisionUnitLabel, isDivisionLetterCategory } from "@/lib/divisions";
 import { exportToExcel, exportToPdf } from "@/lib/export";
 import {
   Search,
@@ -28,6 +29,7 @@ interface Letter {
   id: string;
   letterNumber: string;
   category: string;
+  divisionUnit: string | null;
   type: string | null;
   subject: string;
   sender: string | null;
@@ -99,6 +101,7 @@ export default function LettersPage() {
   const categoryFilter = searchParams.get("category") || "ALL";
   const typeFilter = searchParams.get("type") || "ALL";
   const agendaTypeFilter = searchParams.get("agendaType") || "ALL";
+  const divisionUnitFilter = searchParams.get("divisionUnit") || "ALL";
   const openCreate = searchParams.get("create") === "true";
 
   const [categoryTab, setCategoryTab] = useState<string>(categoryFilter);
@@ -109,6 +112,7 @@ export default function LettersPage() {
   const [search, setSearch] = useState("");
   const [type, setType] = useState(typeFilter);
   const [agendaType, setAgendaType] = useState<string>(agendaTypeFilter);
+  const [divisionUnit, setDivisionUnit] = useState<string>(divisionUnitFilter);
   const [showModal, setShowModal] = useState(false);
   const [showImportModal, setShowImportModal] = useState(false);
   const [loading, setLoading] = useState(true);
@@ -124,10 +128,11 @@ export default function LettersPage() {
   useEffect(() => {
     setCategoryTab(searchParams.get("category") || "ALL");
     setAgendaType(searchParams.get("agendaType") || "ALL");
+    setDivisionUnit(searchParams.get("divisionUnit") || "ALL");
     setPage(1);
   }, [searchParams]);
 
-  const filterLabel =
+  const categoryLabel =
     categoryTab === "ALL"
       ? "Semua Dokumen"
       : categoryTab === "KELUAR_MASUK"
@@ -139,6 +144,10 @@ export default function LettersPage() {
           : categoryTab === "NOTA_DIVISI"
             ? "Nota Internal / Divisi"
             : "Nota Verifikasi";
+  const filterLabel =
+    isDivisionLetterCategory(categoryTab) && divisionUnit !== "ALL"
+      ? `${categoryLabel} - ${getDivisionUnitLabel(divisionUnit)}`
+      : categoryLabel;
 
   const fetchLetters = useCallback(async () => {
     setLoading(true);
@@ -147,6 +156,7 @@ export default function LettersPage() {
         category: categoryTab,
         type: type !== "ALL" ? type : undefined,
         agendaType: categoryTab === "AGENDA" && agendaType !== "ALL" ? agendaType : undefined,
+        divisionUnit: isDivisionLetterCategory(categoryTab) && divisionUnit !== "ALL" ? divisionUnit : undefined,
         search: search || undefined,
         page,
         startDate: filterStartDate || undefined,
@@ -162,7 +172,7 @@ export default function LettersPage() {
     } finally {
       setLoading(false);
     }
-  }, [categoryTab, type, agendaType, search, page, filterStartDate, filterEndDate, filterMonth, filterYear]);
+  }, [categoryTab, type, agendaType, divisionUnit, search, page, filterStartDate, filterEndDate, filterMonth, filterYear]);
 
   useEffect(() => {
     fetchLetters();
@@ -178,12 +188,28 @@ export default function LettersPage() {
     setPage(1);
   }, [agendaTypeFilter]);
 
+  useEffect(() => {
+    setDivisionUnit(divisionUnitFilter);
+    setPage(1);
+  }, [divisionUnitFilter]);
+
   function handleAgendaTypeFilter(value: string) {
     const params = new URLSearchParams(searchParams.toString());
     if (value === "ALL") {
       params.delete("agendaType");
     } else {
       params.set("agendaType", value);
+    }
+    params.set("page", "1");
+    router.push(`/dashboard/letters?${params.toString()}`);
+  }
+
+  function handleDivisionUnitFilter(value: string) {
+    const params = new URLSearchParams(searchParams.toString());
+    if (value === "ALL") {
+      params.delete("divisionUnit");
+    } else {
+      params.set("divisionUnit", value);
     }
     params.set("page", "1");
     router.push(`/dashboard/letters?${params.toString()}`);
@@ -216,6 +242,7 @@ export default function LettersPage() {
         category: categoryTab,
         type: type !== "ALL" ? type : undefined,
         agendaType: categoryTab === "AGENDA" && agendaType !== "ALL" ? agendaType : undefined,
+        divisionUnit: isDivisionLetterCategory(categoryTab) && divisionUnit !== "ALL" ? divisionUnit : undefined,
         startDate: filterStartDate || undefined,
         endDate: filterEndDate || undefined,
         month: filterMonth ? parseInt(filterMonth, 10) : undefined,
@@ -321,6 +348,7 @@ export default function LettersPage() {
                 params.set("category", cat.key);
               }
               params.delete("agendaType");
+              params.delete("divisionUnit");
               params.set("page", "1");
               router.push(`/dashboard/letters?${params.toString()}`);
             }}
@@ -405,6 +433,20 @@ export default function LettersPage() {
                 <option value="ALL">Semua Tipe</option>
                 <option value="MASUK">Surat Masuk</option>
                 <option value="KELUAR">Surat Keluar</option>
+              </select>
+            )}
+            {isDivisionLetterCategory(categoryTab) && (
+              <select
+                className="filter-select"
+                value={divisionUnit}
+                onChange={(e) => handleDivisionUnitFilter(e.target.value)}
+              >
+                <option value="ALL">Semua Divisi</option>
+                {DIVISION_UNITS.map((unit) => (
+                  <option key={unit.value} value={unit.value}>
+                    {unit.label}
+                  </option>
+                ))}
               </select>
             )}
 
@@ -561,6 +603,7 @@ export default function LettersPage() {
                 <thead>
                   <tr>
                     <th>No. Nota</th>
+                    <th>Divisi</th>
                     <th>Keterangan</th>
                     <th>Tanggal</th>
                     <th>Jumlah</th>
@@ -573,6 +616,7 @@ export default function LettersPage() {
                 <thead>
                   <tr>
                     <th>No. Nota</th>
+                    <th>Divisi</th>
                     <th>Perihal</th>
                     <th>Tanggal</th>
                     <th>Nominal</th>
@@ -713,6 +757,7 @@ export default function LettersPage() {
                     return (
                       <tr key={letter.id}>
                         <td><span className="id-cell">{letter.letterNumber}</span></td>
+                        <td style={{ fontSize: "12px", maxWidth: "170px" }}>{getDivisionUnitLabel(letter.divisionUnit)}</td>
                         <td style={{ maxWidth: "250px", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{letter.subject}</td>
                         <td style={{ fontSize: "12px" }}>{formatDate(letter.letterDate)}</td>
                         <td style={{ fontWeight: 600, color: "var(--text-primary)" }}>{letter.nominal ? formatRupiah(letter.nominal) : "—"}</td>
@@ -736,6 +781,7 @@ export default function LettersPage() {
                     return (
                       <tr key={letter.id}>
                         <td><span className="id-cell">{letter.letterNumber}</span></td>
+                        <td style={{ fontSize: "12px", maxWidth: "170px" }}>{getDivisionUnitLabel(letter.divisionUnit)}</td>
                         <td style={{ maxWidth: "250px", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{letter.subject}</td>
                         <td style={{ fontSize: "12px" }}>{formatDate(letter.letterDate)}</td>
                         <td style={{ fontWeight: 600, color: "var(--text-primary)" }}>{letter.nominal ? formatRupiah(letter.nominal) : "—"}</td>
@@ -778,10 +824,14 @@ export default function LettersPage() {
                           <span>Tipe: {letter.type}</span>
                         )}
                         {letter.category === "NOTA_VERIFIKASI" && (
-                          <span style={{ fontWeight: 500 }}>{letter.nominal ? formatRupiah(letter.nominal) : "—"}</span>
+                          <span style={{ fontWeight: 500 }}>
+                            {getDivisionUnitLabel(letter.divisionUnit)} | {letter.nominal ? formatRupiah(letter.nominal) : "—"}
+                          </span>
                         )}
                         {letter.category === "NOTA_DIVISI" && (
-                          <span style={{ fontWeight: 500 }}>{letter.nominal ? formatRupiah(letter.nominal) : "—"}</span>
+                          <span style={{ fontWeight: 500 }}>
+                            {getDivisionUnitLabel(letter.divisionUnit)} | {letter.nominal ? formatRupiah(letter.nominal) : "—"}
+                          </span>
                         )}
                       </td>
                       <td>

@@ -6,6 +6,7 @@ export interface LetterHashInput {
   subject: string;
   sender: string;
   recipient: string;
+  divisionUnit?: string;
   letterDate: Date | string;
 }
 
@@ -14,6 +15,6 @@ export interface LetterHashInput {
  * Berguna untuk memverifikasi integritas data surat di UI.
  */
 export function generateLetterHash(letter: LetterHashInput): string {
-  const content = `${letter.id}-${letter.letterNumber}-${letter.subject}-${letter.sender}-${letter.recipient}-${new Date(letter.letterDate).toISOString()}`;
+  const content = `${letter.id}-${letter.letterNumber}-${letter.subject}-${letter.sender}-${letter.recipient}-${letter.divisionUnit || ""}-${new Date(letter.letterDate).toISOString()}`;
   return crypto.createHash("sha256").update(content).digest("hex");
 }
