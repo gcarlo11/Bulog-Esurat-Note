@@ -200,7 +200,7 @@ export default async function DashboardPage({
                     {getActionLabel(log.action)}
                   </div>
                   <div className="timeline-meta">
-                    {log.user.name} • {new Date(log.createdAt).toLocaleTimeString("id-ID", { hour: "2-digit", minute: "2-digit" })}
+                    {log.user.name} • {new Date(log.createdAt).toLocaleTimeString("id-ID", { hour: "2-digit", minute: "2-digit", timeZone: "Asia/Jakarta" })}
                   </div>
                 </div>
               ))}
