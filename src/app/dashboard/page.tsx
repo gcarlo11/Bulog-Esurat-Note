@@ -186,7 +186,6 @@ export default async function DashboardPage({
           </div>
         </div>
 
-        {/* Right: Modern Audit Log Feed */}
         <div style={{ background: "var(--bg-elevated)", border: "1px solid var(--border-default)", borderRadius: "var(--radius-lg)", padding: "20px" }}>
           <h3 style={{ fontSize: "14px", fontWeight: 600, color: "var(--text-primary)", marginBottom: "16px", display: "flex", alignItems: "center", gap: "8px" }}>
             <ShieldCheck size={16} />

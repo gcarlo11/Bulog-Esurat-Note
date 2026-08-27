@@ -23,7 +23,6 @@ import {
   Inbox,
 } from "lucide-react";
 
-// Akun demo untuk quick-fill dengan desain ter-themed
 const DEMO_ACCOUNTS = [
   { role: "Admin", email: "admin@esurat.local", password: "admin123", color: "bg-brand-blue/10 text-brand-blue dark:text-brand-gold border-brand-blue/20 dark:border-brand-gold/20 hover:bg-brand-blue/20 dark:hover:bg-brand-gold/10" },
   { role: "Staff", email: "staff@esurat.local", password: "staff123", color: "bg-brand-gold/10 text-brand-gold dark:text-brand-blue border-brand-gold/20 dark:border-brand-blue/20 hover:bg-brand-gold/20 dark:hover:bg-brand-blue/10" },
@@ -61,7 +60,6 @@ export default function LoginPage() {
         setError(result.error);
       }
     } catch {
-      // redirect throws — expected
     } finally {
       setLoading(false);
     }
@@ -96,20 +94,16 @@ export default function LoginPage() {
 
   return (
     <div className="min-h-screen flex items-center justify-center p-4 relative overflow-hidden transition-colors duration-500">
-      {/* Starfield Background */}
       <StarfieldBackground className="absolute inset-0 z-0" count={450} speed={0.4} />
 
-      {/* Floating Theme Switcher */}
       <div className="absolute top-4 right-4 z-50">
         <ThemeSwitcher />
       </div>
 
-      {/* Decorative glows */}
       <div className="absolute top-0 left-0 w-[600px] h-[600px] bg-indigo-500/5 rounded-full blur-[120px] -translate-x-1/2 -translate-y-1/2 pointer-events-none" />
       <div className="absolute bottom-0 right-0 w-[500px] h-[500px] bg-purple-500/5 rounded-full blur-[120px] translate-x-1/3 translate-y-1/3 pointer-events-none" />
 
       <div className="w-full max-w-md relative z-10">
-        {/* Logo & Branding */}
         <div className="text-center mb-6">
           <div className="inline-flex items-center justify-center mb-4">
             <img src="/logo.svg" alt="BULOG Logo" className="h-16 w-auto object-contain" />
@@ -121,7 +115,6 @@ export default function LoginPage() {
           </p>
         </div>
 
-        {/* Card with sleek glassmorphism styling */}
         <Card className="border-zinc-200 dark:border-zinc-800 bg-white/70 dark:bg-zinc-950/65 backdrop-blur-xl shadow-xl shadow-black/5 dark:shadow-black/40 text-zinc-900 dark:text-white transition-all duration-300">
           <CardHeader className="pb-4 text-center">
             <CardTitle className="text-zinc-950 dark:text-white text-xl font-bold">Masuk ke Sistem</CardTitle>
@@ -131,7 +124,6 @@ export default function LoginPage() {
           </CardHeader>
 
           <CardContent className="space-y-4">
-            {/* Alert Error */}
             {error && (
               <div className="flex items-start gap-2.5 rounded-lg border border-red-500/20 bg-red-500/10 px-3.5 py-2.5 text-xs text-red-600 dark:text-red-300">
                 <AlertCircle size={14} className="mt-0.5 shrink-0" />
@@ -139,7 +131,6 @@ export default function LoginPage() {
               </div>
             )}
 
-            {/* Alert Success */}
             {success && (
               <div className="flex items-start gap-2.5 rounded-lg border border-emerald-500/20 bg-emerald-500/10 px-3.5 py-2.5 text-xs text-emerald-600 dark:text-emerald-300">
                 <CheckCircle2 size={14} className="mt-0.5 shrink-0" />
@@ -147,7 +138,6 @@ export default function LoginPage() {
               </div>
             )}
 
-            {/* Form */}
             <form onSubmit={handleLogin} className="space-y-3.5">
               <div className="space-y-1.5">
                 <Label htmlFor="email" className="text-zinc-700 dark:text-zinc-300 text-xs font-semibold">
@@ -158,7 +148,7 @@ export default function LoginPage() {
                   name="email"
                   ref={emailRef}
                   type="email"
-                  placeholder="nama@esurat.local"
+                  placeholder="nama@gmail.com"
                   required
                   autoComplete="email"
                   value={email}
@@ -214,7 +204,6 @@ export default function LoginPage() {
               </Button>
             </form>
 
-            {/* Security/Log Information */}
             <div className="flex items-center justify-center gap-1 text-[10px] text-zinc-500 dark:text-zinc-500 font-medium pt-2">
               <ShieldCheck size={11} />
               <span>Dilindungi kriptografi JWT HS256 &amp; hash bcrypt</span>

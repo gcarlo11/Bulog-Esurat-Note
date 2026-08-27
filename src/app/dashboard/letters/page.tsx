@@ -633,7 +633,7 @@ export default function LettersPage() {
                         </td>
                         <td style={{ verticalAlign: "top", paddingTop: "10px" }}>
                           <span style={{ fontWeight: 600, color: "var(--text-primary)", display: "block", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }} title={letter.subject}>{letter.subject}</span>
-                          {/* Mobile expanded detail */}
+
                           <div className="col-show-mobile" style={{ display: "none", marginTop: "4px" }}>
                             <div style={{ display: "flex", alignItems: "center", gap: "6px", flexWrap: "wrap", margin: "4px 0" }}>
                               <span className={`type-badge type-${(letter.type || "").toLowerCase()}`} style={{ fontSize: "10px" }}>
@@ -755,7 +755,6 @@ export default function LettersPage() {
                     );
                   }
 
-                  // Default Fallback (All)
                   return (
                     <tr key={letter.id}>
                       <td>
@@ -802,7 +801,6 @@ export default function LettersPage() {
               </tbody>
             </table>
 
-            {/* Pagination */}
             <div className="pagination">
               <div className="pagination-info">
                 Menampilkan {letters.length} dari {total} dokumen

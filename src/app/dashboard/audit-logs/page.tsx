@@ -17,15 +17,18 @@ interface AuditLogEntry {
 
 function formatDateTime(dateStr: Date) {
   const d = new Date(dateStr);
+  const wibOptions = { timeZone: "Asia/Jakarta" } as const;
   const dateFormatted = d.toLocaleDateString("id-ID", {
     day: "2-digit",
     month: "short",
     year: "numeric",
+    ...wibOptions,
   });
   const timeFormatted = d.toLocaleTimeString("id-ID", {
     hour: "2-digit",
     minute: "2-digit",
     hour12: false,
+    ...wibOptions,
   }).replace(":", ".");
 
   return { dateFormatted, timeFormatted };
